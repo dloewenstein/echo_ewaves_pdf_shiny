@@ -19,7 +19,8 @@ RUN wget --no-verbose https://download3.rstudio.org/ubuntu-14.04/x86_64/VERSION 
     rm -f version.txt ss-latest.deb && \
     . /etc/environment && \
     R -e "install.packages(c('shiny', 'rmarkdown', 'DT'), repos='$MRAN')" && \
-    cp -R /echoewaves_app /srv/shiny-server/
+
+ADD /echoewaves_app /srv/shiny-server/
 
 EXPOSE 3838
 
