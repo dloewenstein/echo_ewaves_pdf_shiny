@@ -87,7 +87,13 @@ server <- function(input, output){
   })
   
  output$dataset <- DT::renderDataTable({
-   DT::datatable(newData$df, selection = "multiple") %>% 
+   DT::datatable(newData$df, 
+                 selection = "multiple", 
+                 style = "default",
+                 colnames = c("Peak driving force" = "peak_driving_force",
+                              "Peak resistive force" = "peak_resistive_force",
+                              "Damping index" = "damping_index",
+                              "Filling energy" = "filling_energy")) %>% 
      formatRound(1:ncol(newData$df), 3)
  })
  output$download_data <- downloadHandler(filename = function() {
