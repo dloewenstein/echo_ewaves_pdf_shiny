@@ -122,10 +122,19 @@ server <- function(input, output) {
       selection = "multiple",
       style = "default",
       colnames = c(
-        "Peak driving force" = "peak_driving_force",
-        "Peak resistive force" = "peak_resistive_force",
-        "Damping index" = "damping_index",
-        "Filling energy" = "filling_energy"
+        "E Acceleration" = "AT",
+        "E Vmax" = "Epeak",
+        "E Deceleration" = "DT",
+        "Viscoelasticity c [g/s]" = "C",
+        "Stiffness k [g/s2]" = "K",
+        "Load x0 [cm]" = "x0",
+        "VTI [cm]" = "VTI",
+        "Tau [ms]" = "Tau",
+        "KFEI [%]" = "KFEI",
+        "Damping c2-4k [g2/s2]" = "damping_index",
+        "Peak driving force kx0 [mN]" = "peak_driving_force",
+        "Peak resistive force, cVmax [mN]" = "peak_resistive_force",
+        "Filling energy 1/2kx02 [mJ]" = "filling_energy"
       )
     ) %>%
       formatRound(1:ncol(newData$df), 3)
