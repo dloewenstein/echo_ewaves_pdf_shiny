@@ -1,4 +1,4 @@
-FROM rocker/shiny:3.4.3
+FROM rocker/shiny
 
 RUN apt-get update && apt-get install -y \
     sudo \

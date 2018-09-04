@@ -1,18 +1,57 @@
-# library(shiny)
-# library(DT)
-#
-# lapply(list("R/fzero.R",
-#             "R/generate_initial_pdf_parameters.R",
-#             "R/generate_pdf_parameters.R",
-#             "R/rclipBoardSetup.R",
-#             "R/rclipButton.R"), source)
-#
-#
-# cot <- function(x){
-#   return(1/tan(x))
-# }
+library(shiny)
+library(DT)
 
-function(input, output) {
+lapply(
+  list(
+    "R/fzero.R",
+    "R/generate_initial_pdf_parameters.R",
+    "R/generate_pdf_parameters.R",
+    "R/rclipBoardSetup.R",
+    "R/rclipButton.R"
+  ),
+  source
+)
+
+ui <- fluidPage(
+  rclipboardSetup(),
+  
+  titlePanel("Echo E-Waves parameterized diastolic filling method"),
+  sidebarLayout(
+    sidebarPanel(
+      numericInput(
+        inputId = "AT",
+        label = "AT",
+        value = 0
+      ),
+      numericInput(
+        inputId = "DT",
+        label = "DT",
+        value = 0
+      ),
+      numericInput(
+        inputId = "Epeak",
+        label = "Epeak",
+        value = 0
+      ),
+      actionButton(inputId = "add_data", "Add data")
+    ),
+    mainPanel(
+      DT::dataTableOutput(outputId = "dataset"),
+      fluidRow(column(3,
+        uiOutput("clip")),
+        column(
+          3,
+          downloadButton(outputId = "download_data", label = "Download Data")
+        ),
+        column(
+          3,
+          actionButton(inputId = "delete_rows", label = "Delete selected")
+        ))
+    )
+  )
+)
+
+server <- function(input, output) {
   newData <- reactiveValues()
   newData$df <- data.frame(
     AT = numeric(0),
@@ -99,9 +138,11 @@ function(input, output) {
       write.csv(newData$df, file)
     }
   )
-  # output$clip <- renderUI({
-  #   rclipButton(inputId = "clipbutton", label = "Copy2clipboard",
-  #               clipText = newData$df,
-  #               icon("clipboard"))
-  # })
+  output$clip <- renderUI({
+    rclipButton(inputId = "clipbutton", label = "Copy2clipboard",
+                clipText = newData$df,
+                icon("clipboard"))
+  })
 }
+
+shinyApp(ui = ui, server = server)
