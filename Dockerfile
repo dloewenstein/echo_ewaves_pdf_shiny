@@ -26,4 +26,4 @@ EXPOSE 3838
 
 ADD shiny-server.sh /usr/bin/shiny-server.sh
 
-RUN ["chmod", "+x", "/usr/bin/shiny-server.sh"]
+CMD ["/usr/bin/shiny-server.sh"]
