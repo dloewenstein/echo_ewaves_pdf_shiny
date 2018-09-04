@@ -1,34 +1,35 @@
 # library(shiny)
 # library(DT)
-# 
+#
 # lapply(list("R/fzero.R",
 #             "R/generate_initial_pdf_parameters.R",
 #             "R/generate_pdf_parameters.R",
 #             "R/rclipBoardSetup.R",
 #             "R/rclipButton.R"), source)
-# 
-# 
+#
+#
 # cot <- function(x){
 #   return(1/tan(x))
 # }
 
-server <- function(input, output){
-  
+function(input, output) {
   newData <- reactiveValues()
-  newData$df <- data.frame(AT = numeric(0),
-                           DT = numeric(0),
-                           Epeak = numeric(0),
-                           K = numeric(0),
-                           C = numeric(0),
-                           x0 = numeric(0),
-                           Tau = numeric(0),
-                           KFEI = numeric(0),
-                           VTI = numeric(0),
-                           peak_driving_force = numeric(0),
-                           peak_resistive_force = numeric(0),
-                           damping_index = numeric(0),
-                           filling_energy = numeric(0),
-                           stringsAsFactors = FALSE)
+  newData$df <- data.frame(
+    AT = numeric(0),
+    DT = numeric(0),
+    Epeak = numeric(0),
+    K = numeric(0),
+    C = numeric(0),
+    x0 = numeric(0),
+    Tau = numeric(0),
+    KFEI = numeric(0),
+    VTI = numeric(0),
+    peak_driving_force = numeric(0),
+    peak_resistive_force = numeric(0),
+    damping_index = numeric(0),
+    filling_energy = numeric(0),
+    stringsAsFactors = FALSE
+  )
   
   showData <- observeEvent(input$add_data, {
     req(input$AT)
@@ -36,51 +37,67 @@ server <- function(input, output){
     req(input$Epeak)
     
     
-    initial_parameters <- generate_c_k_x0(AT = input$AT, DT = input$DT, Epeak = input$Epeak)
-    secundary_parameters <- generate_pdf_parameters(C = initial_parameters$C,
-                                                    K = initial_parameters$K,
-                                                    x0 = initial_parameters$x0,
-                                                    Epeak = input$Epeak)
+    initial_parameters <-
+      generate_c_k_x0(AT = input$AT,
+                      DT = input$DT,
+                      Epeak = input$Epeak)
+    secundary_parameters <-
+      generate_pdf_parameters(
+        C = initial_parameters$C,
+        K = initial_parameters$K,
+        x0 = initial_parameters$x0,
+        Epeak = input$Epeak
+      )
     
-    newData$df <- rbind(newData$df, data.frame(AT = input$AT,
-                                               DT = input$DT,
-                                               Epeak = input$Epeak,
-                                               K = initial_parameters$K,
-                                               C = initial_parameters$C,
-                                               x0 = initial_parameters$x0,
-                                               Tau = secundary_parameters$Tau,
-                                               KFEI = secundary_parameters$KFEI,
-                                               VTI = secundary_parameters$VTI,
-                                               peak_driving_force = secundary_parameters$peak_driving_force,
-                                               peak_resistive_force = secundary_parameters$peak_resistive_force,
-                                               damping_index = secundary_parameters$damping_index,
-                                               filling_energy = secundary_parameters$filling_energy,
-                                               stringsAsFactors = FALSE))
+    newData$df <- rbind(
+      newData$df,
+      data.frame(
+        AT = input$AT,
+        DT = input$DT,
+        Epeak = input$Epeak,
+        K = initial_parameters$K,
+        C = initial_parameters$C,
+        x0 = initial_parameters$x0,
+        Tau = secundary_parameters$Tau,
+        KFEI = secundary_parameters$KFEI,
+        VTI = secundary_parameters$VTI,
+        peak_driving_force = secundary_parameters$peak_driving_force,
+        peak_resistive_force = secundary_parameters$peak_resistive_force,
+        damping_index = secundary_parameters$damping_index,
+        filling_energy = secundary_parameters$filling_energy,
+        stringsAsFactors = FALSE
+      )
+    )
   }, ignoreNULL = TRUE)
   
   delete_rows <- observeEvent(input$delete_rows, {
     s <- input$dataset_rows_selected
     if (!is.null(s)) {
-      newData$df <- newData$df[-s, ]
+      newData$df <- newData$df[-s,]
     }
   })
   
   output$dataset <- DT::renderDataTable({
-    DT::datatable(newData$df, 
-                  selection = "multiple", 
-                  style = "default",
-                  colnames = c("Peak driving force" = "peak_driving_force",
-                               "Peak resistive force" = "peak_resistive_force",
-                               "Damping index" = "damping_index",
-                               "Filling energy" = "filling_energy")) %>% 
+    DT::datatable(
+      newData$df,
+      selection = "multiple",
+      style = "default",
+      colnames = c(
+        "Peak driving force" = "peak_driving_force",
+        "Peak resistive force" = "peak_resistive_force",
+        "Damping index" = "damping_index",
+        "Filling energy" = "filling_energy"
+      )
+    ) %>%
       formatRound(1:ncol(newData$df), 3)
   })
-  output$download_data <- downloadHandler(filename = function() {
-    paste0("Echo_EWaves_PDF_", Sys.Date(), ".csv")
-  },
-  content = function(file) {
-    write.csv(newData$df, file)
-  }
+  output$download_data <- downloadHandler(
+    filename = function() {
+      paste0("Echo_EWaves_PDF_", Sys.Date(), ".csv")
+    },
+    content = function(file) {
+      write.csv(newData$df, file)
+    }
   )
   # output$clip <- renderUI({
   #   rclipButton(inputId = "clipbutton", label = "Copy2clipboard",
