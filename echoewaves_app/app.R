@@ -13,7 +13,7 @@ lapply(
 )
 
 ui <- fluidPage(
-  rclipboardSetup(),
+  # rclipboardSetup(),
   
   titlePanel("Echo E-Waves parameterized diastolic filling method"),
   sidebarLayout(
@@ -37,8 +37,8 @@ ui <- fluidPage(
     ),
     mainPanel(
       DT::dataTableOutput(outputId = "dataset"),
-      fluidRow(column(3,
-        uiOutput("clip")),
+      fluidRow(#column(3,
+        #uiOutput("clip")),
         column(
           3,
           downloadButton(outputId = "download_data", label = "Download Data")
@@ -138,11 +138,11 @@ server <- function(input, output) {
       write.csv(newData$df, file)
     }
   )
-  output$clip <- renderUI({
-    rclipButton(inputId = "clipbutton", label = "Copy2clipboard",
-                clipText = newData$df,
-                icon("clipboard"))
-  })
+  # output$clip <- renderUI({
+  #   rclipButton(inputId = "clipbutton", label = "Copy2clipboard",
+  #               clipText = newData$df,
+  #               icon("clipboard"))
+  # })
 }
 
 shinyApp(ui = ui, server = server)
