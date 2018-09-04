@@ -11,7 +11,7 @@ RUN apt-get update && apt-get install -y \
     wget
 
 
-RUN R -e "install.packages(c('DT'), repos='$MRAN')"
+RUN R -e "install.packages(c('DT'), repos='$CRAN')"
 
 ADD /echoewaves_app /srv/shiny-server/
 
