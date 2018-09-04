@@ -1,4 +1,5 @@
 library(shiny)
+library(DT)
 
 lapply(list("R/fzero.R",
             "R/generate_initial_pdf_parameters.R",
@@ -86,7 +87,8 @@ server <- function(input, output){
   })
   
  output$dataset <- DT::renderDataTable({
-   DT::datatable(newData$df, selection = "multiple")
+   DT::datatable(newData$df, selection = "multiple") %>% 
+     formatRound(1:ncol(newData$df), 3)
  })
  output$download_data <- downloadHandler(filename = function() {
    paste0("Echo_EWaves_PDF_", Sys.Date(), ".csv")
