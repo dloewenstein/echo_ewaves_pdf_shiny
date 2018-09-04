@@ -20,6 +20,7 @@ RUN wget --no-verbose https://download3.rstudio.org/ubuntu-14.04/x86_64/VERSION 
     . /etc/environment && \
     R -e "install.packages(c('shiny', 'rmarkdown', 'DT'), repos='$MRAN')"
 
+ADD shiny-server.conf /etc/shiny-server/shiny-server.conf
 ADD /echoewaves_app /srv/shiny-server/
 
 EXPOSE 3838
