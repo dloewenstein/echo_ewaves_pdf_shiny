@@ -1,16 +1,16 @@
-library(shiny)
-library(DT)
-
-lapply(list("R/fzero.R",
-            "R/generate_initial_pdf_parameters.R",
-            "R/generate_pdf_parameters.R",
-            "R/rclipBoardSetup.R",
-            "R/rclipButton.R"), source)
-
-
-cot <- function(x){
-  return(1/tan(x))
-}
+# library(shiny)
+# library(DT)
+# 
+# lapply(list("R/fzero.R",
+#             "R/generate_initial_pdf_parameters.R",
+#             "R/generate_pdf_parameters.R",
+#             "R/rclipBoardSetup.R",
+#             "R/rclipButton.R"), source)
+# 
+# 
+# cot <- function(x){
+#   return(1/tan(x))
+# }
 
 server <- function(input, output){
   
@@ -82,9 +82,9 @@ server <- function(input, output){
     write.csv(newData$df, file)
   }
   )
-  output$clip <- renderUI({
-    rclipButton(inputId = "clipbutton", label = "Copy2clipboard",
-                clipText = newData$df,
-                icon("clipboard"))
-  })
+  # output$clip <- renderUI({
+  #   rclipButton(inputId = "clipbutton", label = "Copy2clipboard",
+  #               clipText = newData$df,
+  #               icon("clipboard"))
+  # })
 }

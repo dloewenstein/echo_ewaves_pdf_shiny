@@ -14,7 +14,7 @@ cot <- function(x){
 
 ui <- fluidPage(
   
-  rclipboardSetup(),
+  #rclipboardSetup(),
   
   titlePanel("Echo E-Waves parameterized diastolic filling method"),
   sidebarLayout(
@@ -27,8 +27,8 @@ ui <- fluidPage(
     mainPanel(
       DT::dataTableOutput(outputId = "dataset"),
       fluidRow(
-        column(3,
-               uiOutput("clip")),
+        #column(3,
+               #uiOutput("clip")),
         column(3,
                downloadButton(outputId = "download_data", label = "Download Data")
         ),
