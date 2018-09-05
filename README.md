@@ -1,2 +1,2 @@
-# echo_ewaves_pdf_shiny
+# Echo E-Waves PDF method Shiny app
 Shiny app for analysis of diastolic function using the parameterized diastolic filling method
