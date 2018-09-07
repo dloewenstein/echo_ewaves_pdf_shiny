@@ -20,8 +20,8 @@ generate_pdf_parameters <- function(C, K, x0, Epeak){
     tmax = log((a+b)/(a-b))/(2*b)
     Vmax = -x0*K*exp(-a*(tmax))*sinh(b*(tmax))/b
     Edur = AT + DT
-    VTI  = integrate(function(x){-K*x0/b*exp(-a*x)*sinh(b*x)}, 0, Edur)
-    IdealVTI = integrate(function(x){-K*x0/sqrt(K)*sin(sqrt(K)*x)}, 0, pi/(0.5*sqrt(4*K))) #Integralen av funktion -k.*xo/sqrt(k).*sin(sqrt(k).*x)) mellan 0 och pi/(0.5*sqrt(4*k))
+    VTI  = integrate(function(x){-K*x0/b*exp(-a*x)*sinh(b*x)}, 0, Edur)$value
+    IdealVTI = integrate(function(x){-K*x0/sqrt(K)*sin(sqrt(K)*x)}, 0, pi/(0.5*sqrt(4*K)))$value #Integralen av funktion -k.*xo/sqrt(k).*sin(sqrt(k).*x)) mellan 0 och pi/(0.5*sqrt(4*k))
     KFEI = VTI/IdealVTI
     
     # DT and Tau calculated with S's geometric method
@@ -39,7 +39,7 @@ generate_pdf_parameters <- function(C, K, x0, Epeak){
     Tau  = (DTr + 0.12)/2.88
     ta   = DT + AT
     VTI  = -x0*K/(C*C/4)*(-C/2*ta*exp(-C/2*ta)-exp(-c/2*ta)) - x0*k/(C*C/4)
-    IdealVTI = integrate(function(x){-K*x0/sqrt(K)*sin(sqrt(K)*x)}, 0, pi/(0.5*sqrt(4*K))) #Integralen av funktion -k.*xo/sqrt(k).*sin(sqrt(k).*x)) mellan 0 och pi/(0.5*sqrt(4*k))KFEI = VTI/IdealVTI 
+    IdealVTI = integrate(function(x){-K*x0/sqrt(K)*sin(sqrt(K)*x)}, 0, pi/(0.5*sqrt(4*K)))$value #Integralen av funktion -k.*xo/sqrt(k).*sin(sqrt(k).*x)) mellan 0 och pi/(0.5*sqrt(4*k))KFEI = VTI/IdealVTI 
     }
   
   return(list(Tau = Tau, 
