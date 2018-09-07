@@ -1,4 +1,7 @@
 generate_pdf_parameters <- function(C, K, x0, Epeak, AT, DT){
+    AT <- AT/1000
+    DT <- DT/1000
+    
   a = C/2
   peak_driving_force = K*x0
   peak_resistive_force = C*Epeak
