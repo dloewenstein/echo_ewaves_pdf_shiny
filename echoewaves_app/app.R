@@ -85,7 +85,9 @@ server <- function(input, output) {
         C = initial_parameters$C,
         K = initial_parameters$K,
         x0 = initial_parameters$x0,
-        Epeak = input$Epeak
+        Epeak = input$Epeak,
+        AT = input$AT,
+        DT = input$DT
       )
     
     newData$df <- rbind(
