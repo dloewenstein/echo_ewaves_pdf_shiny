@@ -20,17 +20,17 @@ ui <- fluidPage(
     sidebarPanel(
       numericInput(
         inputId = "AT",
-        label = "AT",
+        label = "AT [ms]",
         value = 0
       ),
       numericInput(
         inputId = "DT",
-        label = "DT",
+        label = "DT [ms]",
         value = 0
       ),
       numericInput(
         inputId = "Epeak",
-        label = "Epeak",
+        label = "Epeak [m/s]",
         value = 0
       ),
       actionButton(inputId = "add_data", "Add data")
@@ -96,11 +96,11 @@ server <- function(input, output) {
         Epeak = input$Epeak,
         K = initial_parameters$K,
         C = initial_parameters$C,
-        x0 = initial_parameters$x0,
-        Tau = secundary_parameters$Tau,
+        x0 = abs(initial_parameters$x0),
+        Tau = secundary_parameters$Tau*1000,
         KFEI = secundary_parameters$KFEI,
         VTI = secundary_parameters$VTI,
-        peak_driving_force = secundary_parameters$peak_driving_force,
+        peak_driving_force = abs(secundary_parameters$peak_driving_force),
         peak_resistive_force = secundary_parameters$peak_resistive_force,
         damping_index = secundary_parameters$damping_index,
         filling_energy = secundary_parameters$filling_energy,
@@ -122,9 +122,9 @@ server <- function(input, output) {
       selection = "multiple",
       style = "default",
       colnames = c(
-        "E Acceleration" = "AT",
-        "E Vmax" = "Epeak",
-        "E Deceleration" = "DT",
+        "E Acceleration [ms]" = "AT",
+        "E Vmax [m/s]" = "Epeak",
+        "E Deceleration [ms]" = "DT",
         "Viscoelasticity c [g/s]" = "C",
         "Stiffness k [g/s2]" = "K",
         "Load x0 [cm]" = "x0",
@@ -137,7 +137,7 @@ server <- function(input, output) {
         "Filling energy 1/2kx02 [mJ]" = "filling_energy"
       )
     ) %>%
-      formatRound(1:ncol(newData$df), 3)
+      formatRound(1:ncol(newData$df), 1)
   })
   output$download_data <- downloadHandler(
     filename = function() {
