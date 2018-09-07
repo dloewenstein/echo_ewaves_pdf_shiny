@@ -20,12 +20,12 @@ ui <- fluidPage(
     sidebarPanel(
       numericInput(
         inputId = "AT",
-        label = "AT [ms]",
+        label = "AT",
         value = 0
       ),
       numericInput(
         inputId = "DT",
-        label = "DT [ms]",
+        label = "DT",
         value = 0
       ),
       numericInput(

@@ -1,7 +1,4 @@
 generate_c_k_x0 <- function(AT, DT, Epeak){
-    AT <- AT/1000
-    DT <- DT/1000
-    
   .cot <- function(x) 1/tan(x)
   if(DT/AT < exp(1)/(exp(1)-2)){
     K <- 1/(AT + DT)^2 * pi^2/(1-(cos(pi*AT/(AT+DT)))^2)
