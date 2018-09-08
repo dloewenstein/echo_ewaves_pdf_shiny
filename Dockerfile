@@ -11,10 +11,10 @@ RUN apt-get update && apt-get install -y \
     wget
 
 
-RUN R -e "install.packages(c('devtools', 'plotly'), repos='https://cloud.r-project.org/') && \
-          devtools::install_github('hadley/ggplot2') && \
-          devtools::install_github('jrowen/rhandsontable') && \
-          devtools::install_github('rstudio/shinydashboard')"
+RUN R -e "install.packages(c('devtools', 'plotly'), repos='https://cloud.r-project.org/')" && \
+    R -e "devtools::install_github('hadley/ggplot2')" && \
+    R -e "devtools::install_github('jrowen/rhandsontable')" && \
+    R -e "devtools::install_github('rstudio/shinydashboard')"
 
 ADD /echoewaves_app /srv/shiny-server/
 
