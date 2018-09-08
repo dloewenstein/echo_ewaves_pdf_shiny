@@ -1,5 +1,8 @@
 library(shiny)
-library(DT)
+library(rhandsontable)
+library(shinydashboard)
+library(ggplot2)
+library(plotly)
 
 lapply(
   list(
@@ -12,148 +15,149 @@ lapply(
   source
 )
 
-ui <- fluidPage(
-  # rclipboardSetup(),
-  
-  titlePanel("Echo E-Waves parameterized diastolic filling method"),
-  sidebarLayout(
-    sidebarPanel(
-      numericInput(
-        inputId = "AT",
-        label = "AT [ms]",
-        value = 0
-      ),
-      numericInput(
-        inputId = "DT",
-        label = "DT [ms]",
-        value = 0
-      ),
-      numericInput(
-        inputId = "Epeak",
-        label = "Epeak [m/s]",
-        value = 0
-      ),
-      actionButton(inputId = "add_data", "Add data")
-    ),
-    mainPanel(
-      DT::dataTableOutput(outputId = "dataset"),
-      fluidRow(#column(3,
-        #uiOutput("clip")),
-        column(
-          3,
-          downloadButton(outputId = "download_data", label = "Download Data")
-        ),
-        column(
-          3,
-          actionButton(inputId = "delete_rows", label = "Delete selected")
-        ))
+ui <- dashboardPage(
+    skin="blue",
+    title="Echo E-waves",
+    sidebar = dashboardSidebar(disable=TRUE),
+    header=dashboardHeader(title="Echo E-Waves parameterized diastolic filling method"),
+    body=dashboardBody(
+        fluidRow(
+            box(width=7,
+                solidHeader=TRUE,
+                rHandsontableOutput("hot_table")
+                )
+            ),
+        # fluidRow(
+        #     column(
+        #         3,
+        #         downloadButton(outputId = "download_data", label = "Download Data")
+        #         )
+        #     ),
+        fluidRow(
+            box(width=7,
+                plotlyOutput("scatterplot"))
+            )
     )
-  )
 )
 
-server <- function(input, output) {
-  newData <- reactiveValues()
-  newData$df <- data.frame(
-    AT = numeric(0),
-    DT = numeric(0),
-    Epeak = numeric(0),
-    K = numeric(0),
-    C = numeric(0),
-    x0 = numeric(0),
-    Tau = numeric(0),
-    KFEI = numeric(0),
-    VTI = numeric(0),
-    peak_driving_force = numeric(0),
-    peak_resistive_force = numeric(0),
-    damping_index = numeric(0),
-    filling_energy = numeric(0),
-    stringsAsFactors = FALSE
-  )
-  
-  showData <- observeEvent(input$add_data, {
-    req(input$AT)
-    req(input$DT)
-    req(input$Epeak)
+server <- function(input, output, session) {
     
+    original_table_length <- 10
     
-    initial_parameters <-
-      generate_c_k_x0(AT = input$AT,
-                      DT = input$DT,
-                      Epeak = input$Epeak)
-    secundary_parameters <-
-      generate_pdf_parameters(
-        C = initial_parameters$C,
-        K = initial_parameters$K,
-        x0 = initial_parameters$x0,
-        Epeak = input$Epeak,
-        AT = input$AT,
-        DT = input$DT
-      )
-    
-    newData$df <- rbind(
-      newData$df,
-      data.frame(
-        AT = input$AT,
-        DT = input$DT,
-        Epeak = input$Epeak,
-        K = initial_parameters$K,
-        C = initial_parameters$C,
-        x0 = abs(initial_parameters$x0),
-        Tau = secundary_parameters$Tau*1000,
-        KFEI = secundary_parameters$KFEI,
-        VTI = secundary_parameters$VTI,
-        peak_driving_force = abs(secundary_parameters$peak_driving_force),
-        peak_resistive_force = secundary_parameters$peak_resistive_force,
-        damping_index = secundary_parameters$damping_index,
-        filling_energy = secundary_parameters$filling_energy,
+    app_dataframe <- data.frame(
+        AT = c(rep(NA_character_,original_table_length)),
+        DT = rep(NA_character_,original_table_length),
+        Epeak = rep(NA_character_,original_table_length),
+        K = rep(NA_character_,original_table_length),
+        C = rep(NA_character_,original_table_length),
+        x0 = rep(NA_character_,original_table_length),
+        Tau = rep(NA_character_,original_table_length),
+        KFEI = rep(NA_character_,original_table_length),
+        VTI = rep(NA_character_,original_table_length),
+        peak_driving_force = rep(NA_character_,original_table_length),
+        peak_resistive_force = rep(NA_character_,original_table_length),
+        damping_index = rep(NA_character_,original_table_length),
+        filling_energy = rep(NA_character_,original_table_length),
         stringsAsFactors = FALSE
-      )
     )
-  }, ignoreNULL = TRUE)
+    
+    read_only_columns <- names(
+        subset(
+            app_dataframe, 
+            select=-c(AT, DT, Epeak)
+        )
+    )
+    
+    input_columns <- c("AT", "DT", "Epeak")
+    
+    col_names <- list(
+        "E Acceleration Time [ms]",
+        "E Decceleration Time [ms]",
+        "E Vmax [m/s]",
+        "Stiffness (K), [g/s2]",
+        "Viscoelasticity (C), [cm]",
+        "Load (x0), [cm]",
+        "Tau [ms]",
+        "KFEI [%]",
+        "VTI [cm]",
+        "Peak Driving Force [mN]",
+        "Peak Resistive Force [mN]",
+        "Damping Index [g2/s2]",
+        "Filling Energy [mJ"
+    )
+    
+    names(col_names) <- names(app_dataframe)
+    
+    datavalues <- reactiveValues(data=app_dataframe)
   
-  delete_rows <- observeEvent(input$delete_rows, {
-    s <- input$dataset_rows_selected
-    if (!is.null(s)) {
-      newData$df <- newData$df[-s,]
-    }
-  })
+  output$hot_table <- renderRHandsontable({
+      rhandsontable(datavalues$data) %>%
+          hot_context_menu(allowColEdit=FALSE) %>% 
+          hot_cols(columnSorting=TRUE,
+                   type="numeric",
+                   copyable=TRUE,
+                   sorting=TRUE) %>% 
+          hot_col(col=read_only_columns,
+                  readOnly=TRUE) %>%
+          hot_col(col=c("AT", "DT"), format="0") %>%
+          hot_col(col="Epeak",       format="0.0") %>% 
+          hot_col(col="KFEI",        format="0.0%") %>%
+          hot_col(col="K",           format="0") %>% 
+          hot_col(col="C",           format="0.0") %>% 
+          hot_col(col="x0",          format="0.0") %>% 
+          hot_col(col="Tau",         format="0") %>% 
+          hot_col(col="peak_driving_force",   format="0.0") %>% 
+          hot_col(col="peak_resistive_force", format="0.0") %>% 
+          hot_col(col="damping_index",        format="0") %>% 
+          hot_col(col="filling_energy",       format="0.00")
+      })
   
-  output$dataset <- DT::renderDataTable({
-    DT::datatable(
-      newData$df,
-      selection = "multiple",
-      style = "default",
-      colnames = c(
-        "E Acceleration [ms]" = "AT",
-        "E Vmax [m/s]" = "Epeak",
-        "E Deceleration [ms]" = "DT",
-        "Viscoelasticity c [g/s]" = "C",
-        "Stiffness k [g/s2]" = "K",
-        "Load x0 [cm]" = "x0",
-        "VTI [cm]" = "VTI",
-        "Tau [ms]" = "Tau",
-        "KFEI [%]" = "KFEI",
-        "Damping c2-4k [g2/s2]" = "damping_index",
-        "Peak driving force kx0 [mN]" = "peak_driving_force",
-        "Peak resistive force, cVmax [mN]" = "peak_resistive_force",
-        "Filling energy 1/2kx02 [mJ]" = "filling_energy"
-      )
-    ) %>%
-      formatRound(1:ncol(newData$df), 1)
-  })
-  output$download_data <- downloadHandler(
-    filename = function() {
-      paste0("Echo_EWaves_PDF_", Sys.Date(), ".csv")
-    },
-    content = function(file) {
-      write.csv(newData$df, file)
-    }
-  )
-  # output$clip <- renderUI({
-  #   rclipButton(inputId = "clipbutton", label = "Copy2clipboard",
-  #               clipText = newData$df,
-  #               icon("clipboard"))
-  # })
+  observeEvent(
+      input$hot_table$changes$changes,
+      {
+          row_index <- input$hot_table$changes$changes[[1]][[1]]+1
+          req(input$hot_table$data[[row_index]][[1]])
+          req(input$hot_table$data[[row_index]][[2]])
+          req(input$hot_table$data[[row_index]][[3]])
+          
+          datavalues$data <- hot_to_r(input$hot_table)
+          datavalues$data <- as.data.frame(sapply(datavalues$data, as.numeric))
+          
+          initial_pdf_parameters <- generate_c_k_x0(AT=datavalues$data[row_index, "AT"],
+                                                    DT=datavalues$data[row_index, "DT"],
+                                                    Epeak=datavalues$data[row_index, "Epeak"])
+          
+          secondary_pdf_parameters <- generate_pdf_parameters(C=initial_pdf_parameters$C,
+                                                              K=initial_pdf_parameters$K,
+                                                              x0=initial_pdf_parameters$x0,
+                                                              AT=datavalues$data[row_index, "AT"],
+                                                              DT=datavalues$data[row_index, "DT"],
+                                                              Epeak=datavalues$data[row_index, "Epeak"])
+              datavalues$data[row_index, "K"] <- initial_pdf_parameters$K
+              datavalues$data[row_index, "C"] <- initial_pdf_parameters$C
+              datavalues$data[row_index, "x0"] <- abs(initial_pdf_parameters$x0)*100   #  Convert from meter to cm, present as absolut value
+              datavalues$data[row_index, "Tau"] <- (secondary_pdf_parameters$Tau)*1000 #  Convert from seconds to milliseconds
+              datavalues$data[row_index, "KFEI"] <- secondary_pdf_parameters$KFEI
+              datavalues$data[row_index, "VTI"] <- secondary_pdf_parameters$VTI
+              datavalues$data[row_index, "peak_driving_force"] <- abs(secondary_pdf_parameters$peak_driving_force) #  Present as absolute value
+              datavalues$data[row_index, "peak_resistive_force"] <- secondary_pdf_parameters$peak_resistive_force
+              datavalues$data[row_index, "damping_index"] <- secondary_pdf_parameters$damping_index
+              datavalues$data[row_index, "filling_energy"] <- secondary_pdf_parameters$filling_energy
+      })
+  
+  output$scatterplot <- renderPlotly({
+      p_scatterplot <- ggplot(datavalues$data, aes(x=peak_resistive_force,
+                                                   y=peak_driving_force)) +
+          geom_point() +
+          geom_smooth(method="lm", se=FALSE, show.legend=TRUE) +
+          labs(x="Peak Driving Force [mN]",
+               y="Peak Resistive Force [mN]",
+               parse=TRUE) +
+          theme_light()
+      
+      ggplotly(p_scatterplot)
+      })
+  
+  session$allowReconnect(TRUE)
 }
-
 shinyApp(ui = ui, server = server)
