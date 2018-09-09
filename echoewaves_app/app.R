@@ -14,9 +14,7 @@ lapply(
     "R/color_renderer.R",
     "R/ewave_velocity_fx_time.R",
     "R/generate_initial_pdf_parameters.R",
-    "R/generate_pdf_parameters.R",
-    "R/rclipBoardSetup.R",
-    "R/rclipButton.R"
+    "R/generate_pdf_parameters.R"
   ),
   source
 )
@@ -232,8 +230,17 @@ server <- function(input, output, session) {
               geom_line() +
               labs(x="Time (s)", y="Velocity (m/s)") +
               annotate("text", x=0.3, y=0.9, label="Example curve", size=10) +
+              scale_y_continuous(limit=c(0, 1.2), expand=c(0,0)) +
+              scale_x_continuous(limit=c(0, 0.405), expand=c(0,0)) +
               theme_light()
       } else{
+          y_max <- velocityvalues$data %>%
+              na.omit(id) %>% 
+              select(velocity_curve) %>% 
+              unnest(velocity_curve) %>% 
+              pull(y) %>% 
+              max(., na.rm=TRUE)
+          
           p_velocityplot <- ggplot(velocityvalues$data %>%
                                    na.omit(id) %>%
                                    mutate(id=factor(id)) %>% 
@@ -242,6 +249,8 @@ server <- function(input, output, session) {
               geom_line() +
               labs(x="Time (s)", y="Velocity (m/s)") +
               theme_light() +
+              scale_y_continuous(limit=c(0, y_max+0.1), expand=c(0,0)) +
+              scale_x_continuous(limits=c(0, 0.405), expand=c(0,0)) +
               guides(colour=guide_legend(title="Curve ID"))
       }
       ggplotly(p_velocityplot)
