@@ -13,7 +13,7 @@ RUN apt-get update && apt-get install -y \
     libgit2-dev
 
 
-RUN R -e "install.packages(c('devtools', 'plotly'), repos='https://cloud.r-project.org/')" && \
+RUN R -e "install.packages(c('devtools', 'plotly', 'DT'), repos='https://cloud.r-project.org/')" && \
     R -e "devtools::install_github('hadley/ggplot2')" && \
     R -e "devtools::install_github('jrowen/rhandsontable')" && \
     R -e "devtools::install_github('rstudio/shinydashboard')"
