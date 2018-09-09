@@ -198,7 +198,12 @@ server <- function(input, output, session) {
                         "Peak\nDriving\nForce\n[mN]"="peak_driving_force",
                         "Peak\nResistive\nForce\n[mN]"="peak_resistive_force",
                         "Damping\nIndex\n[g2/s2]"="damping_index",
-                        "Filling\nEnergy\n[mJ]"="filling_energy")
+                        "Filling\nEnergy\n[mJ]"="filling_energy"),
+                    extensions = 'Buttons',
+                    options = list(
+                        dom = 'Bfrtip',
+                        buttons = c('copy', 'csv', 'excel', 'pdf', 'print')
+                        )
                     ) %>% 
           formatRound(col_names[c("AT", "DT", "K", "Tau", "damping_index")], digits=0) %>% 
           formatPercentage(col_names["KFEI"], digits=1) %>% 
