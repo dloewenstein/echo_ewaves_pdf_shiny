@@ -10,6 +10,7 @@ lapply(
   list(
     "R/fzero.R",
     "R/curve_fit.R",
+    "R/color_renderer.R",
     "R/ewave_velocity_fx_time.R",
     "R/generate_initial_pdf_parameters.R",
     "R/generate_pdf_parameters.R",
@@ -109,8 +110,8 @@ server <- function(input, output, session) {
                    sorting=TRUE) %>% 
           hot_col(col=read_only_columns,
                   readOnly=TRUE) %>%
-          hot_col(col=c("AT", "DT"), format="0") %>%
-          hot_col(col="Epeak",       format="0.0") %>% 
+          hot_col(col=c("AT", "DT"), format="0", renderer=color_renderer) %>%
+          hot_col(col="Epeak",       format="0.0", renderer=color_renderer) %>% 
           hot_col(col="KFEI",        format="0.0%") %>%
           hot_col(col="K",           format="0") %>% 
           hot_col(col="C",           format="0.0") %>% 
