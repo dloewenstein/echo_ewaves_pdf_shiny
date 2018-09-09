@@ -8,13 +8,15 @@ RUN apt-get update && apt-get install -y \
     libcurl4-gnutls-dev \
     libcairo2-dev \
     libxt-dev \
-    wget
+    wget \
+    libssl-dev \
+    libgit2-dev
 
 
-RUN sudo su - -c "R -e \"install.packages(c('devtools', 'plotly'), repos='https://cloud.r-project.org/')\""
-RUN sudo su - -c "R -e \"devtools::install_github('hadley/ggplot2')\""
-RUN sudo su - -c "R -e \"devtools::install_github('jrowen/rhandsontable')\""
-RUN sudo su - -c "R -e \"devtools::install_github('rstudio/shinydashboard')\""
+RUN R -e "install.packages(c('devtools', 'plotly'), repos='https://cloud.r-project.org/')" && \
+    R -e "devtools::install_github('hadley/ggplot2')" && \
+    R -e "devtools::install_github('jrowen/rhandsontable')" && \
+    R -e "devtools::install_github('rstudio/shinydashboard')"
 
 ADD /echoewaves_app /srv/shiny-server/
 
