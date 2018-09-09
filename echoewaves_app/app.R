@@ -3,10 +3,14 @@ library(rhandsontable)
 library(shinydashboard)
 library(ggplot2)
 library(plotly)
+library(dplyr)
+library(tidyr)
 
 lapply(
   list(
     "R/fzero.R",
+    "R/curve_fit.R",
+    "R/ewave_velocity_fx_time.R",
     "R/generate_initial_pdf_parameters.R",
     "R/generate_pdf_parameters.R",
     "R/rclipBoardSetup.R",
@@ -22,30 +26,29 @@ ui <- dashboardPage(
     header=dashboardHeader(title="Echo E-Waves parameterized diastolic filling method"),
     body=dashboardBody(
         fluidRow(
-            box(width=7,
+            column(width=7,
+                box(width=NULL,
+                    solidHeader=TRUE,
+                    rHandsontableOutput("hot_table")
+                    ),
+                box(width=NULL,
+                    plotlyOutput("scatterplot")
+                    )
+                ),
+            box(width=5,
                 solidHeader=TRUE,
-                rHandsontableOutput("hot_table")
+                plotlyOutput("velocityplot")
                 )
-            ),
-        # fluidRow(
-        #     column(
-        #         3,
-        #         downloadButton(outputId = "download_data", label = "Download Data")
-        #         )
-        #     ),
-        fluidRow(
-            box(width=7,
-                plotlyOutput("scatterplot"))
             )
+        )
     )
-)
 
 server <- function(input, output, session) {
     
     original_table_length <- 10
     
     app_dataframe <- data.frame(
-        AT = c(rep(NA_character_,original_table_length)),
+        AT = rep(NA_character_,original_table_length),
         DT = rep(NA_character_,original_table_length),
         Epeak = rep(NA_character_,original_table_length),
         K = rep(NA_character_,original_table_length),
@@ -60,6 +63,12 @@ server <- function(input, output, session) {
         filling_energy = rep(NA_character_,original_table_length),
         stringsAsFactors = FALSE
     )
+    
+    velocity_dataframe <- dplyr::tibble(id=rep(NA_real_, 100),
+                                        K=rep(NA_real_, 100),
+                                        C=rep(NA_real_, 100),
+                                        x0=rep(NA_real_, 100),
+                                        velocity_curve=vector("list", 100))
     
     read_only_columns <- names(
         subset(
@@ -89,6 +98,7 @@ server <- function(input, output, session) {
     names(col_names) <- names(app_dataframe)
     
     datavalues <- reactiveValues(data=app_dataframe)
+    velocityvalues <- reactiveValues(data=velocity_dataframe)
   
   output$hot_table <- renderRHandsontable({
       rhandsontable(datavalues$data) %>%
@@ -115,13 +125,21 @@ server <- function(input, output, session) {
   observeEvent(
       input$hot_table$changes$changes,
       {
+
+# Requisites -------------------------------------------------------------
+
+
           row_index <- input$hot_table$changes$changes[[1]][[1]]+1
           req(input$hot_table$data[[row_index]][[1]])
           req(input$hot_table$data[[row_index]][[2]])
           req(input$hot_table$data[[row_index]][[3]])
-          
+
+# Make R objects ---------------------------------------------------------
           datavalues$data <- hot_to_r(input$hot_table)
           datavalues$data <- as.data.frame(sapply(datavalues$data, as.numeric))
+
+# Generate PDF variables -------------------------------------------------
+
           
           initial_pdf_parameters <- generate_c_k_x0(AT=datavalues$data[row_index, "AT"],
                                                     DT=datavalues$data[row_index, "DT"],
@@ -143,6 +161,16 @@ server <- function(input, output, session) {
               datavalues$data[row_index, "peak_resistive_force"] <- secondary_pdf_parameters$peak_resistive_force
               datavalues$data[row_index, "damping_index"] <- secondary_pdf_parameters$damping_index
               datavalues$data[row_index, "filling_energy"] <- secondary_pdf_parameters$filling_energy
+              
+              velocityvalues$data[row_index, c("C", "K", "x0")] <- datavalues$data[row_index, c("C", "K", "x0")]
+              velocityvalues$data[row_index, "x0"] <- ((-1)*velocityvalues$data[row_index, "x0"])/100
+              velocityvalues$data[row_index, "id"] <- row_index
+              
+              velocityvalues$data[row_index, "velocity_curve"] <- list(purrr::pmap(
+                  velocityvalues$data[row_index,] %>%
+                      select(K, C, x0),
+                  ewave_velocity_fx_time_data
+              ))
       })
   
   output$scatterplot <- renderPlotly({
@@ -157,6 +185,28 @@ server <- function(input, output, session) {
       
       ggplotly(p_scatterplot)
       })
+  
+  output$velocityplot <- renderPlotly({
+      if(is.na(velocityvalues$data$id[1])){
+          example_data <- ewave_velocity_fx_time_data(41.58, 384.36, -0.1586)
+          p_velocityplot <- ggplot(example_data, aes(x=x, y=y)) +
+              geom_line() +
+              labs(x="Time (s)", y="Velocity (m/s)") +
+              annotate("text", x=0.3, y=0.9, label="Example curve", size=10) +
+              theme_light()
+      } else{
+          p_velocityplot <- ggplot(velocityvalues$data %>%
+                                   na.omit(id) %>%
+                                   mutate(id=factor(id)) %>% 
+                                   select(id, velocity_curve) %>% 
+                                   unnest(velocity_curve), aes(x=x, y=y, colour=id)) +
+              geom_line() +
+              labs(x="Time (s)", y="Velocity (m/s)") +
+              theme_light() +
+              guides(colour=guide_legend(title="Curve ID"))
+      }
+      ggplotly(p_velocityplot)
+  })
   
   session$allowReconnect(TRUE)
 }
