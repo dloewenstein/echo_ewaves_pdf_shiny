@@ -1,2 +1,81 @@
-# Echo E-Waves PDF method Shiny app
-Shiny app for analysis of diastolic function using the parameterized diastolic filling method
+# Echo E-Waves Shiny app
+Shiny app for analysis of diastolic function using the parameterized diastolic
+filling (PDF) method
+
+## Introduction
+Echo E-waves is a freely available software application for the analysis of
+diastolic function using the parameterized diastolic filling (PDF) method.
+
+[Download page](http://echoewaves.org/downloads/)  
+A description of the program and its usage can be found
+[here](https://bmcmedimaging.biomedcentral.com/articles/10.1186/s12880-016-0162-8).
+
+### The PDF method
+The parameterized diastolic filling (PDF) method is a method for analyzing the
+early diastolic filling phase of the left ventricle.
+
+During early diastole, the left ventricle recoils from its compressed state in
+late systole. Its motion during this recoil can be accurately described as a
+case of damped harmonic motion, a mathematical model from classical mechanics.
+
+Using this model, every filling phase can characterized in terms of the three
+constants load, stiffness and viscoelastic energy loss. As described by Dr
+Kóvacs, and implemented in Echo E-waves, the E-wave as recorded by PW Doppler
+during a conventional echocardiographic examination can be used as input to a
+mathematical function, resulting in the ouput of the three constants mentioned
+above. Thus, every E-wave can be used to obtain information on left ventricular
+diastolic load, stiffness and viscoelastic energy loss.
+
+## Requirements
+This shiny app is setup up on Google Cloud Platform (GCP) Compute Engine VM instance
+
+Specs:
+
+- Machine type: g1-small (1 vCPU, 1.7 GB memory)  
+- Disk: 10 GB
+- OS: Ubuntu 16.04 x64
+
+## Installation
+
+``` shell
+wget https://raw.githubusercontent.com/dokku/dokku/v0.12.12/bootstrap.sh
+sudo DOKKU_TAG=v0.12.12 bash bootstrap.sh
+```
+
+Make sure to open up port 80 to your VM instance, then go to your server's IP and follow the web installer.
+
+Setup for ssh access by providing your own public ssh key, for instructions see [Github](https://help.github.com/articles/connecting-to-github-with-ssh/)
+
+## Deploying to Dokku
+Once Dokku has been configured with at least one user, applications can be deployed via a `git push` command.
+
+### Create the app
+Create the application on the Dokku host. You will need to ssh onto the host to run this command.
+
+``` shell
+# on the Dokku host
+dokku apps:create echoewaves
+```
+
+### Deploy the app
+Now you can deploy the echoewaves app to your Dokku server. All you have to do is add a remote to name the app. Applications are created on-the-fly on the Dokku server.
+
+```shell
+# from your local machine
+# the remote username *must* be dokku or pushes will fail
+cd echoewaves
+git remote add dokku dokku@your.server.adress:echoewaves
+git push dokku master
+```
+
+```shell
+=====> Application deployed:
+remote: ttp://35.228.225.94:3838
+
+To dokku@your.server.adress:echoewaves
+   5ff614c..0bd8f3b  master -> master
+```
+
+When the deploy finishes, the application's URL is shown.
+
+For more in depth instructions see Dokku [documentation](http://dokku.viewdocs.io/dokku/deployment/application-deployment/)
