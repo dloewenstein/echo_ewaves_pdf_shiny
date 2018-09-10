@@ -8,7 +8,6 @@ echo_ewaves_pdf_shiny_app/
 ├── Dockerfile
 ├── echoewaves_app
 │   ├── app.R
-│   ├── echoewaves_app.Rproj
 │   ├── R
 │   │   ├── color_renderer.R
 │   │   ├── curve_fit.R
