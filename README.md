@@ -2,6 +2,27 @@
 Shiny app for analysis of diastolic function using the parameterized diastolic
 filling (PDF) method
 
+## Project overview
+```
+echo_ewaves_pdf_shiny_app/
+├── Dockerfile
+├── echoewaves_app
+│   ├── app.R
+│   ├── echoewaves_app.Rproj
+│   ├── R
+│   │   ├── color_renderer.R
+│   │   ├── curve_fit.R
+│   │   ├── ewave_velocity_fx_time.R
+│   │   ├── fzero.R
+│   │   ├── generate_initial_pdf_parameters.R
+│   │   └── generate_pdf_parameters.R
+│   └── tests
+├── LICENSE
+├── README.md
+├── shiny-server.conf
+└── shiny-server.sh
+```
+
 ## Introduction
 Echo E-waves is a freely available software application for the analysis of
 diastolic function using the parameterized diastolic filling (PDF) method.
