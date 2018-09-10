@@ -36,6 +36,12 @@ Specs:
 - OS: Ubuntu 16.04 x64
 
 ## Installation
+### Install Dokku
+Dokku is an extensible, open source Platform as a Service that runs on a single server of your choice.
+
+Dokku is designed for usage on a fresh VM installation, and should install all necessary dependencies if installing via the bootstrap method. See [here](http://dokku.viewdocs.io/dokku/getting-started/installation/) for requirements.
+
+To install the latest stable version of dokku, you can run the following shell commands:
 
 ``` shell
 wget https://raw.githubusercontent.com/dokku/dokku/v0.12.12/bootstrap.sh
