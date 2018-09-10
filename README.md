@@ -76,7 +76,7 @@ git push dokku master
 
 ```shell
 =====> Application deployed:
-remote: ttp://35.228.225.94:3838
+remote: ttp://your.server.adress:assigned.port
 
 To dokku@your.server.adress:echoewaves
    5ff614c..0bd8f3b  master -> master
