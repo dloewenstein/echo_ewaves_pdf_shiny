@@ -63,12 +63,20 @@ ui <- dashboardPage(
             )
         ), 
         fluidRow(
-            box(width=10,
-                title="Results",
-                status="primary",
-                solidHeader=TRUE,
+            box(width  = 9,
+                title  = "Results",
+                status = "primary",
+                solidHeader = TRUE,
                 DT::dataTableOutput("dataview")
                 )
+        ),
+        fluidRow(
+            box(width  = 9,
+                title  = "Summary",
+                status = "primary",
+                solidHeader = TRUE,
+                DT::dataTableOutput("summary")
+            )
         ),
         fluidRow(
             box(width=6,
@@ -130,8 +138,9 @@ server <- function(input, output, session) {
                                         x0=rep(NA_real_, 100),
                                         velocity_curve=vector("list", 100))
     
-    dataview_values <- reactiveValues(data=dataview_dataframe)
-    velocityvalues <- reactiveValues(data=velocity_dataframe)
+    dataview_values <- reactiveValues(data = dataview_dataframe)
+    summary_values <- reactiveValues(data = dataview_dataframe %>% select(-velocity_curve))
+    velocityvalues <- reactiveValues(data = velocity_dataframe)
   
 
     observeEvent(input$enter, {
@@ -188,6 +197,17 @@ server <- function(input, output, session) {
           )
           
           dataview_values$data <- rbind(dataview_values$data, pdf_data)
+
+          mean_values  <- dataview_values$data %>% 
+              select(-velocity_curve) %>% 
+              summarize_all(mean)
+          
+          sd_values    <- dataview_values$data %>% 
+              select(-velocity_curve) %>% 
+              summarize_all(sd)
+          
+          summary_values$data <- rbind(mean_values, sd_values)
+          row.names(summary_values$data) <- c("mean", "sd")
     })
   
   output$dataview <- DT::renderDataTable({
@@ -208,13 +228,43 @@ server <- function(input, output, session) {
                         "Filling\nEnergy\n[mJ]"="filling_energy"),
                     extensions = 'Buttons',
                     options = list(
-                        dom = 'Bfrtip',
+                        dom = 'Brtip',
                         buttons = c('copy', 'csv', 'excel', 'pdf', 'print')
-                        )
+                        ),
+                    autoHideNavigation = TRUE
                     ) %>% 
           formatRound(col_names[c("AT", "DT", "K", "Tau", "damping_index")], digits=0) %>% 
           formatPercentage(col_names["KFEI"], digits=1) %>% 
           formatRound(col_names[c("C", "x0", "VTI", "peak_driving_force", "peak_resistive_force")],
+                      digits=1) %>% 
+          formatRound(col_names["filling_energy"], digits=2)
+  })
+  
+  output$summary <- DT::renderDataTable({
+      DT::datatable(summary_values$data,
+                    colnames=c(
+                        "E\nAcceleration\nTime\n[ms]"="AT",
+                        "E\nDecceleration\nTime\n[ms]"="DT",
+                        "E\nVmax\n[m/s]"="Epeak",
+                        "Stiffness\n(K)\n[g/s2]"="K",
+                        "Viscoelasticity\n(C)\n[cm]"="C",
+                        "Load\n(x0)\n[cm]"="x0",
+                        "Tau\n[ms]"="Tau",
+                        "KFEI\n[%]"="KFEI",
+                        "VTI\n[cm]"="VTI",
+                        "Peak\nDriving\nForce\n[mN]"="peak_driving_force",
+                        "Peak\nResistive\nForce\n[mN]"="peak_resistive_force",
+                        "Damping\nIndex\n[g2/s2]"="damping_index",
+                        "Filling\nEnergy\n[mJ]"="filling_energy"),
+                    extensions = 'Buttons',
+                    options = list(
+                        dom = 'B',
+                        buttons = c('copy', 'csv', 'excel', 'pdf', 'print')
+                    )
+      ) %>% 
+          formatRound(col_names[c("AT", "DT", "K", "Tau", "damping_index")], digits=0) %>% 
+          formatPercentage(col_names["KFEI"], digits=1) %>% 
+          formatRound(col_names[c("C", "Epeak", "x0", "VTI", "peak_driving_force", "peak_resistive_force")],
                       digits=1) %>% 
           formatRound(col_names["filling_energy"], digits=2)
   })
