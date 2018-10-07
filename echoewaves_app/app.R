@@ -60,10 +60,17 @@ ui <- dashboardPage(
                         width   = input_box_width
                     )
                 )
+            ),
+            box(
+                width = 4,
+                title = "Messages",
+                status = "danger",
+                solidHeader = TRUE,
+                textOutput("messages")
             )
         ), 
         fluidRow(
-            box(width  = 9,
+            box(width  = 8,
                 title  = "Results",
                 status = "primary",
                 solidHeader = TRUE,
@@ -71,9 +78,9 @@ ui <- dashboardPage(
                 )
         ),
         fluidRow(
-            box(width  = 9,
+            box(width  = 8,
                 title  = "Summary",
-                status = "primary",
+                status = "success",
                 solidHeader = TRUE,
                 DT::dataTableOutput("summary")
             )
@@ -141,6 +148,9 @@ server <- function(input, output, session) {
     dataview_values <- reactiveValues(data = dataview_dataframe)
     summary_values <- reactiveValues(data = dataview_dataframe %>% select(-velocity_curve))
     velocityvalues <- reactiveValues(data = velocity_dataframe)
+    
+    .startup_message <- "Everything is correct"
+    message_values <- reactiveValues(text = .startup_message)
   
 
     observeEvent(input$enter, {
@@ -170,6 +180,14 @@ server <- function(input, output, session) {
                                                               AT    = input_AT,
                                                               DT    = input_DT,
                                                               Epeak = input_Epeak)
+          
+          if (initial_pdf_parameters$C < 0) {
+                  .text <- paste0("Viscoelasticity (C) = ", round(initial_pdf_parameters$C, 1), " is unphysiological")
+                  message_values$text <- .text
+              return()
+          } else {
+              message_values$text <- .startup_message
+          }
           
           curve_parameters <- list(K = initial_pdf_parameters$K,
                                    C = initial_pdf_parameters$C,
@@ -209,6 +227,8 @@ server <- function(input, output, session) {
           summary_values$data <- rbind(mean_values, sd_values)
           row.names(summary_values$data) <- c("mean", "sd")
     })
+    
+  output$messages <- renderText({message_values$text})
   
   output$dataview <- DT::renderDataTable({
       DT::datatable(dataview_values$data %>% select(-velocity_curve),
@@ -226,12 +246,13 @@ server <- function(input, output, session) {
                         "Peak\nResistive\nForce\n[mN]"="peak_resistive_force",
                         "Damping\nIndex\n[g2/s2]"="damping_index",
                         "Filling\nEnergy\n[mJ]"="filling_energy"),
-                    extensions = 'Buttons',
+                    extensions = c('Buttons', 'Responsive'),
                     options = list(
                         dom = 'Brtip',
                         buttons = c('copy', 'csv', 'excel', 'pdf', 'print')
                         ),
-                    autoHideNavigation = TRUE
+                    autoHideNavigation = TRUE,
+                    class = "compact"
                     ) %>% 
           formatRound(col_names[c("AT", "DT", "K", "Tau", "damping_index")], digits=0) %>% 
           formatPercentage(col_names["KFEI"], digits=1) %>% 
@@ -256,11 +277,12 @@ server <- function(input, output, session) {
                         "Peak\nResistive\nForce\n[mN]"="peak_resistive_force",
                         "Damping\nIndex\n[g2/s2]"="damping_index",
                         "Filling\nEnergy\n[mJ]"="filling_energy"),
-                    extensions = 'Buttons',
+                    extensions = c('Buttons', 'Responsive'),
                     options = list(
                         dom = 'B',
                         buttons = c('copy', 'csv', 'excel', 'pdf', 'print')
-                    )
+                    ),
+                    class = "compact"
       ) %>% 
           formatRound(col_names[c("AT", "DT", "K", "Tau", "damping_index")], digits=0) %>% 
           formatPercentage(col_names["KFEI"], digits=1) %>% 
