@@ -92,7 +92,7 @@ ui <- dashboardPage(
 
 server <- function(input, output, session) {
     
-    dataview_dataframe <- data.frame(
+    dataview_dataframe <- tibble(
         AT = numeric(0),
         DT = numeric(0),
         Epeak = numeric(0),
@@ -106,7 +106,7 @@ server <- function(input, output, session) {
         peak_resistive_force = numeric(0),
         damping_index = numeric(0),
         filling_energy = numeric(0),
-        stringsAsFactors = FALSE
+        velocity_curve = vector("list", 0)
     )
     
     col_names <- c(
@@ -131,8 +131,12 @@ server <- function(input, output, session) {
                                         x0=rep(NA_real_, 100),
                                         velocity_curve=vector("list", 100))
     
-    dataview_values <- reactiveValues(data=dataview_dataframe)
-    velocityvalues <- reactiveValues(data=velocity_dataframe)
+    dataview_datavalues <- reactiveValues(data = dataview_dataframe)
+    temp_reactive <- reactive({
+        data <- dataview_dataframe
+    })
+    shared_data <- SharedData$new(temp_reactive, group = "ewaves_data")
+    velocityvalues <- reactiveValues(data = velocity_dataframe)
   
 
     observeEvent(input$enter, {
@@ -147,7 +151,6 @@ server <- function(input, output, session) {
           req(input$epeak_input)
 
 # Generate PDF variables -------------------------------------------------
-
           input_AT <- input$at_input
           input_DT <- input$dt_input
           input_Epeak <- input$epeak_input
@@ -162,7 +165,18 @@ server <- function(input, output, session) {
                                                               AT    = input_AT,
                                                               DT    = input_DT,
                                                               Epeak = input_Epeak)
-          pdf_data <- data.frame(
+          
+          curve_parameters <- list(K = initial_pdf_parameters$K,
+                                   C = initial_pdf_parameters$C,
+                                   x0 = initial_pdf_parameters$x0)
+          velocity_curve <- list(
+              purrr::pmap(
+                  curve_parameters,
+                  ewave_velocity_fx_time_data
+              )
+          )
+          
+          pdf_data <- tibble(
               AT = input_AT,
               DT = input_DT,
               Epeak = input_Epeak,
@@ -176,26 +190,17 @@ server <- function(input, output, session) {
               peak_resistive_force = secondary_pdf_parameters$peak_resistive_force,
               damping_index = secondary_pdf_parameters$damping_index,
               filling_energy = secondary_pdf_parameters$filling_energy,
-              stringsAsFactors = FALSE
+              velocity_curve = velocity_curve
           )
           
-          dataview_values$data <- rbind(dataview_values$data, pdf_data)
+          dataview_datavalues$data <- rbind(dataview_datavalues$data, pdf_data)
           
-          row_index <- nrow(dataview_values$data)
-          
-          velocityvalues$data[row_index, c("C", "K", "x0")] <- dataview_values$data[row_index, c("C", "K", "x0")]
-          velocityvalues$data[row_index, "x0"]              <- ((-1) * velocityvalues$data[row_index, "x0"]) / 100
-          velocityvalues$data[row_index, "id"]              <- row_index
-          
-          velocityvalues$data[row_index, "velocity_curve"] <- list(
-              purrr::pmap(
-              velocityvalues$data[row_index, ] %>%
-                  select(K, C, x0),
-              ewave_velocity_fx_time_data))
+          cv <- ClientValue$new("shared_data", "ewaves_data")
+          cv$sendUpdate(dataview_datavalues$data)
     })
   
   output$dataview <- DT::renderDataTable({
-      DT::datatable(dataview_values$data,
+      DT::datatable(shared_data,
                     colnames=c(
                         "E\nAcceleration\nTime\n[ms]"="AT",
                         "E\nDecceleration\nTime\n[ms]"="DT",
@@ -213,7 +218,8 @@ server <- function(input, output, session) {
                     extensions = 'Buttons',
                     options = list(
                         dom = 'Bfrtip',
-                        buttons = c('copy', 'csv', 'excel', 'pdf', 'print')
+                        buttons = c('copy', 'csv', 'excel', 'pdf', 'print'),
+                        columnDefs = list(list(visible = FALSE, targets = c(14)))
                         )
                     ) %>% 
           formatRound(col_names[c("AT", "DT", "K", "Tau", "damping_index")], digits=0) %>% 
@@ -221,10 +227,11 @@ server <- function(input, output, session) {
           formatRound(col_names[c("C", "x0", "VTI", "peak_driving_force", "peak_resistive_force")],
                       digits=1) %>% 
           formatRound(col_names["filling_energy"], digits=2)
-  })
+  },
+  server = FALSE)
   
   output$scatterplot <- renderPlotly({
-      p_scatterplot <- ggplot(dataview_values$data, aes(x=peak_resistive_force,
+      p_scatterplot <- ggplot(shared_data, aes(x=peak_resistive_force,
                                                    y=peak_driving_force)) +
           geom_point() +
           geom_smooth(method="lm", se=FALSE, show.legend=TRUE) +
@@ -237,7 +244,7 @@ server <- function(input, output, session) {
       })
   
   output$velocityplot <- renderPlotly({
-      if(is.na(velocityvalues$data$id[1])){
+      if (!nrow(shared_data$data())) {
           example_data <- ewave_velocity_fx_time_data(41.58, 384.36, -0.1586)
           p_velocityplot <- ggplot(example_data, aes(x=x, y=y)) +
               geom_line() +
@@ -247,18 +254,20 @@ server <- function(input, output, session) {
               scale_x_continuous(limit=c(0, 0.405), expand=c(0,0)) +
               theme_light()
       } else{
-          y_max <- velocityvalues$data %>%
+          y_max <- shared_data$data() %>%
               na.omit(id) %>% 
               select(velocity_curve) %>% 
               unnest(velocity_curve) %>% 
               pull(y) %>% 
-              max(., na.rm=TRUE)
+              max(., na.rm = TRUE)
           
-          p_velocityplot <- ggplot(velocityvalues$data %>%
-                                   na.omit(id) %>%
-                                   mutate(id=factor(id)) %>% 
-                                   select(id, velocity_curve) %>% 
-                                   unnest(velocity_curve), aes(x=x, y=y, colour=id)) +
+          velocity_data <- shared_data$data(withSelection = TRUE, withFilter = FALSE, withKey = TRUE) %>% 
+              select(selection_, key_, velocity_curve) %>% 
+              unnest(velocity_curve)
+          
+          shared_data_velocity <- SharedData$new(velocity_data, key = ~key_, group = "ewaves_data")
+          
+          p_velocityplot <- ggplot(shared_data_velocity, aes(x=x, y=y, colour=key_)) +
               geom_line() +
               labs(x="Time (s)", y="Velocity (m/s)") +
               theme_light() +
