@@ -86,7 +86,7 @@ ui <- dashboardPage(
                 DT::dataTableOutput("summary")
             ),
             box(width = 3,
-                title = "Regression (Load ~ Vmax)",
+                title = "Regression",
                 status = "success",
                 solidHeader = TRUE,
                 DT::dataTableOutput("regression"))
@@ -222,7 +222,7 @@ server <- function(input, output, session) {
           
           dataview_values$data <- rbind(dataview_values$data, pdf_data)
           
-          lm_fit <- lm(x0 ~ Epeak,
+          lm_fit <- lm(peak_driving_force ~ peak_resistive_force,
                        data = dataview_values$data)
           
           lm_tidy <- tidy(lm_fit) %>% 
@@ -323,8 +323,8 @@ server <- function(input, output, session) {
                                                    y=peak_driving_force)) +
           geom_point() +
           geom_smooth(method="lm", se=FALSE, show.legend=TRUE) +
-          labs(x="Peak Driving Force [mN]",
-               y="Peak Resistive Force [mN]",
+          labs(y="Peak Driving Force [mN]",
+               x="Peak Resistive Force [mN]",
                parse=TRUE) +
           theme_light()
       
