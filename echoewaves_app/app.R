@@ -1,5 +1,5 @@
 library(shiny)
-library(rhandsontable)
+library(crosstalk)
 library(shinydashboard)
 library(DT)
 library(ggplot2)
@@ -19,19 +19,51 @@ lapply(
   source
 )
 
+input_box_width <- '100'
+
 ui <- dashboardPage(
-    skin="blue",
-    title="Echo E-waves",
-    sidebar = dashboardSidebar(disable=TRUE),
-    header=dashboardHeader(title="Echo E-Waves parameterized diastolic filling method"),
-    body=dashboardBody(
+    skin = "blue",
+    title = "Echo E-waves",
+    sidebar = dashboardSidebar(disable = TRUE),
+    header = dashboardHeader(title = "Echo E-Waves parameterized diastolic filling method"),
+    body = dashboardBody(
+        tags$script('
+    $(document).on("keydown", function (e) {
+       Shiny.onInputChange("enter", e.which);
+    });
+                '),
         fluidRow(
-            box(width=2,
-                title="Inputs",
-                status="primary",
-                solidHeader=TRUE,
-                rHandsontableOutput("hot_table")
-                ),
+            box(
+                width = 3,
+                title = "Inputs",
+                status = "primary",
+                solidHeader = TRUE,
+                splitLayout(
+                    numericInput(
+                        inputId = "at_input",
+                        label   = "AT",
+                        value   = 0,
+                        min     = 0,
+                        width   = input_box_width
+                    ),
+                    numericInput(
+                        inputId = "dt_input",
+                        label   = "DT",
+                        value   = 0,
+                        min     = 0,
+                        width   = input_box_width
+                    ),
+                    numericInput(
+                        inputId = "epeak_input",
+                        label   = "Epeak",
+                        value   = 0,
+                        min     = 0,
+                        width   = input_box_width
+                    )
+                )
+            )
+        ), 
+        fluidRow(
             box(width=10,
                 title="Results",
                 status="primary",
@@ -60,29 +92,20 @@ ui <- dashboardPage(
 
 server <- function(input, output, session) {
     
-    original_table_length <- 10
-    
-    input_dataframe <- data.frame(
-        AT = rep(NA_character_,original_table_length),
-        DT = rep(NA_character_,original_table_length),
-        Epeak = rep(NA_character_,original_table_length),
-        stringsAsFactors = FALSE
-    )
-    
     dataview_dataframe <- data.frame(
-        AT = rep(NA_real_,original_table_length),
-        DT = rep(NA_real_,original_table_length),
-        Epeak = rep(NA_real_,original_table_length),
-        K = rep(NA_real_,original_table_length),
-        C = rep(NA_real_,original_table_length),
-        x0 = rep(NA_real_,original_table_length),
-        Tau = rep(NA_real_,original_table_length),
-        KFEI = rep(NA_real_,original_table_length),
-        VTI = rep(NA_real_,original_table_length),
-        peak_driving_force = rep(NA_real_,original_table_length),
-        peak_resistive_force = rep(NA_real_,original_table_length),
-        damping_index = rep(NA_real_,original_table_length),
-        filling_energy = rep(NA_real_,original_table_length),
+        AT = numeric(0),
+        DT = numeric(0),
+        Epeak = numeric(0),
+        K = numeric(0),
+        C = numeric(0),
+        x0 = numeric(0),
+        Tau = numeric(0),
+        KFEI = numeric(0),
+        VTI = numeric(0),
+        peak_driving_force = numeric(0),
+        peak_resistive_force = numeric(0),
+        damping_index = numeric(0),
+        filling_energy = numeric(0),
         stringsAsFactors = FALSE
     )
     
@@ -108,78 +131,68 @@ server <- function(input, output, session) {
                                         x0=rep(NA_real_, 100),
                                         velocity_curve=vector("list", 100))
     
-    datavalues <- reactiveValues(data=input_dataframe)
     dataview_values <- reactiveValues(data=dataview_dataframe)
     velocityvalues <- reactiveValues(data=velocity_dataframe)
   
-  output$hot_table <- renderRHandsontable({
-      rhandsontable(datavalues$data) %>%
-          hot_context_menu(allowColEdit=FALSE) %>%
-          hot_cols(columnSorting=TRUE,
-                   type="numeric",
-                   copyable=TRUE,
-                   sorting=TRUE) %>%
-          hot_col(col=c("AT", "DT"), format="0") %>%
-          hot_col(col="Epeak",       format="0.0")
-      })
-  
-  observeEvent(
-      input$hot_table$changes$changes,
-      {
 
+    observeEvent(input$enter, {
 # Requisites -------------------------------------------------------------
-
-
-          row_index <- input$hot_table$changes$changes[[1]][[1]]+1
-          req(input$hot_table$data[[row_index]][[1]])
-          req(input$hot_table$data[[row_index]][[2]])
-          req(input$hot_table$data[[row_index]][[3]])
-
-# Make R objects ---------------------------------------------------------
-          datavalues$data <- hot_to_r(input$hot_table)
-          datavalues$data <- as.data.frame(sapply(datavalues$data, as.numeric))
+          if (input$enter == 13) {
+              TRUE
+          } else {
+              return()
+          }
+          req(input$at_input)
+          req(input$dt_input)
+          req(input$epeak_input)
 
 # Generate PDF variables -------------------------------------------------
 
-          input_AT <- datavalues$data[row_index, "AT"]
-          input_DT <- datavalues$data[row_index, "DT"]
-          input_Epeak <- datavalues$data[row_index, "Epeak"]
+          input_AT <- input$at_input
+          input_DT <- input$dt_input
+          input_Epeak <- input$epeak_input
           
-          initial_pdf_parameters <- generate_c_k_x0(AT=input_AT,
-                                                    DT=input_DT,
-                                                    Epeak=input_Epeak)
+          initial_pdf_parameters <- generate_c_k_x0(AT = input_AT,
+                                                    DT = input_DT,
+                                                    Epeak = input_Epeak)
           
-          secondary_pdf_parameters <- generate_pdf_parameters(C=initial_pdf_parameters$C,
-                                                              K=initial_pdf_parameters$K,
-                                                              x0=initial_pdf_parameters$x0,
-                                                              AT=input_AT,
-                                                              DT=input_DT,
-                                                              Epeak=input_Epeak)
-              
-              dataview_values$data[row_index, "AT"] <- input_AT
-              dataview_values$data[row_index, "DT"] <- input_DT
-              dataview_values$data[row_index, "Epeak"] <- input_Epeak
-              dataview_values$data[row_index, "K"] <- initial_pdf_parameters$K
-              dataview_values$data[row_index, "C"] <- initial_pdf_parameters$C
-              dataview_values$data[row_index, "x0"] <- abs(initial_pdf_parameters$x0)*100   #  Convert from meter to cm, present as absolut value
-              dataview_values$data[row_index, "Tau"] <- (secondary_pdf_parameters$Tau)*1000 #  Convert from seconds to milliseconds
-              dataview_values$data[row_index, "KFEI"] <- secondary_pdf_parameters$KFEI
-              dataview_values$data[row_index, "VTI"] <- secondary_pdf_parameters$VTI*100    # Convert from meter to cm
-              dataview_values$data[row_index, "peak_driving_force"] <- abs(secondary_pdf_parameters$peak_driving_force) #  Present as absolute value
-              dataview_values$data[row_index, "peak_resistive_force"] <- secondary_pdf_parameters$peak_resistive_force
-              dataview_values$data[row_index, "damping_index"] <- secondary_pdf_parameters$damping_index
-              dataview_values$data[row_index, "filling_energy"] <- secondary_pdf_parameters$filling_energy
-              
-              velocityvalues$data[row_index, c("C", "K", "x0")] <- dataview_values$data[row_index, c("C", "K", "x0")]
-              velocityvalues$data[row_index, "x0"] <- ((-1)*velocityvalues$data[row_index, "x0"])/100
-              velocityvalues$data[row_index, "id"] <- row_index
-              
-              velocityvalues$data[row_index, "velocity_curve"] <- list(purrr::pmap(
-                  velocityvalues$data[row_index,] %>%
-                      select(K, C, x0),
-                  ewave_velocity_fx_time_data
-              ))
-      })
+          secondary_pdf_parameters <- generate_pdf_parameters(C     = initial_pdf_parameters$C,
+                                                              K     = initial_pdf_parameters$K,
+                                                              x0    = initial_pdf_parameters$x0,
+                                                              AT    = input_AT,
+                                                              DT    = input_DT,
+                                                              Epeak = input_Epeak)
+          pdf_data <- data.frame(
+              AT = input_AT,
+              DT = input_DT,
+              Epeak = input_Epeak,
+              K = initial_pdf_parameters$K,
+              C = initial_pdf_parameters$C,
+              x0 = abs(initial_pdf_parameters$x0) * 100,             #  Convert from meter to cm, present as absolut value
+              Tau = (secondary_pdf_parameters$Tau) * 1000,            #  Convert from seconds to milliseconds
+              KFEI = secondary_pdf_parameters$KFEI,
+              VTI = secondary_pdf_parameters$VTI * 100,               # Convert from meter to cm
+              peak_driving_force = abs(secondary_pdf_parameters$peak_driving_force), #  Present as absolute value
+              peak_resistive_force = secondary_pdf_parameters$peak_resistive_force,
+              damping_index = secondary_pdf_parameters$damping_index,
+              filling_energy = secondary_pdf_parameters$filling_energy,
+              stringsAsFactors = FALSE
+          )
+          
+          dataview_values$data <- rbind(dataview_values$data, pdf_data)
+          
+          row_index <- nrow(dataview_values$data)
+          
+          velocityvalues$data[row_index, c("C", "K", "x0")] <- dataview_values$data[row_index, c("C", "K", "x0")]
+          velocityvalues$data[row_index, "x0"]              <- ((-1) * velocityvalues$data[row_index, "x0"]) / 100
+          velocityvalues$data[row_index, "id"]              <- row_index
+          
+          velocityvalues$data[row_index, "velocity_curve"] <- list(
+              purrr::pmap(
+              velocityvalues$data[row_index, ] %>%
+                  select(K, C, x0),
+              ewave_velocity_fx_time_data))
+    })
   
   output$dataview <- DT::renderDataTable({
       DT::datatable(dataview_values$data,
