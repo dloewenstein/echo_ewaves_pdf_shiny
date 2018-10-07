@@ -92,7 +92,7 @@ ui <- dashboardPage(
 
 server <- function(input, output, session) {
     
-    dataview_dataframe <- data.frame(
+    dataview_dataframe <- tibble(
         AT = numeric(0),
         DT = numeric(0),
         Epeak = numeric(0),
@@ -106,7 +106,7 @@ server <- function(input, output, session) {
         peak_resistive_force = numeric(0),
         damping_index = numeric(0),
         filling_energy = numeric(0),
-        stringsAsFactors = FALSE
+        velocity_curve = vector("list", 0)
     )
     
     col_names <- c(
@@ -162,7 +162,16 @@ server <- function(input, output, session) {
                                                               AT    = input_AT,
                                                               DT    = input_DT,
                                                               Epeak = input_Epeak)
-          pdf_data <- data.frame(
+          
+          curve_parameters <- list(K = initial_pdf_parameters$K,
+                                   C = initial_pdf_parameters$C,
+                                   x0 = initial_pdf_parameters$x0)
+          velocity_curve <- purrr::pmap(
+              curve_parameters,
+              ewave_velocity_fx_time_data
+              )
+          
+          pdf_data <- tibble(
               AT = input_AT,
               DT = input_DT,
               Epeak = input_Epeak,
@@ -176,26 +185,14 @@ server <- function(input, output, session) {
               peak_resistive_force = secondary_pdf_parameters$peak_resistive_force,
               damping_index = secondary_pdf_parameters$damping_index,
               filling_energy = secondary_pdf_parameters$filling_energy,
-              stringsAsFactors = FALSE
+              velocity_curve = velocity_curve
           )
           
           dataview_values$data <- rbind(dataview_values$data, pdf_data)
-          
-          row_index <- nrow(dataview_values$data)
-          
-          velocityvalues$data[row_index, c("C", "K", "x0")] <- dataview_values$data[row_index, c("C", "K", "x0")]
-          velocityvalues$data[row_index, "x0"]              <- ((-1) * velocityvalues$data[row_index, "x0"]) / 100
-          velocityvalues$data[row_index, "id"]              <- row_index
-          
-          velocityvalues$data[row_index, "velocity_curve"] <- list(
-              purrr::pmap(
-              velocityvalues$data[row_index, ] %>%
-                  select(K, C, x0),
-              ewave_velocity_fx_time_data))
     })
   
   output$dataview <- DT::renderDataTable({
-      DT::datatable(dataview_values$data,
+      DT::datatable(dataview_values$data %>% select(-velocity_curve),
                     colnames=c(
                         "E\nAcceleration\nTime\n[ms]"="AT",
                         "E\nDecceleration\nTime\n[ms]"="DT",
@@ -237,7 +234,7 @@ server <- function(input, output, session) {
       })
   
   output$velocityplot <- renderPlotly({
-      if(is.na(velocityvalues$data$id[1])){
+      if(!nrow(dataview_values$data)){
           example_data <- ewave_velocity_fx_time_data(41.58, 384.36, -0.1586)
           p_velocityplot <- ggplot(example_data, aes(x=x, y=y)) +
               geom_line() +
@@ -247,24 +244,22 @@ server <- function(input, output, session) {
               scale_x_continuous(limit=c(0, 0.405), expand=c(0,0)) +
               theme_light()
       } else{
-          y_max <- velocityvalues$data %>%
-              na.omit(id) %>% 
-              select(velocity_curve) %>% 
-              unnest(velocity_curve) %>% 
+          velocity_data <- dataview_values$data %>% 
+              select(velocity_curve) %>%
+              mutate(id = row.names(.)) %>% 
+              unnest(velocity_curve)
+
+          y_max <- velocity_data %>%
               pull(y) %>% 
-              max(., na.rm=TRUE)
+              max(., na.rm = TRUE)
           
-          p_velocityplot <- ggplot(velocityvalues$data %>%
-                                   na.omit(id) %>%
-                                   mutate(id=factor(id)) %>% 
-                                   select(id, velocity_curve) %>% 
-                                   unnest(velocity_curve), aes(x=x, y=y, colour=id)) +
+          p_velocityplot <- ggplot(velocity_data, aes(x=x, y=y, colour=id)) +
               geom_line() +
               labs(x="Time (s)", y="Velocity (m/s)") +
               theme_light() +
-              scale_y_continuous(limit=c(0, y_max+0.1), expand=c(0,0)) +
-              scale_x_continuous(limits=c(0, 0.405), expand=c(0,0)) +
-              guides(colour=guide_legend(title="Curve ID"))
+              scale_y_continuous(limits = c(0, y_max+0.1), expand = c(0,0)) +
+              scale_x_continuous(limits = c(0, 0.405), expand = c(0,0)) +
+              guides(colour=guide_legend(title = "Curve ID"))
       }
       ggplotly(p_velocityplot)
   })
