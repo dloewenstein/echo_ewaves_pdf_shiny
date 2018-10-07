@@ -5,6 +5,7 @@ library(ggplot2)
 library(plotly)
 library(dplyr)
 library(tidyr)
+library(broom)
 
 lapply(
   list(
@@ -83,7 +84,12 @@ ui <- dashboardPage(
                 status = "success",
                 solidHeader = TRUE,
                 DT::dataTableOutput("summary")
-            )
+            ),
+            box(width = 3,
+                title = "Regression (Load ~ Vmax)",
+                status = "success",
+                solidHeader = TRUE,
+                DT::dataTableOutput("regression"))
         ),
         fluidRow(
             box(width=6,
@@ -123,6 +129,12 @@ server <- function(input, output, session) {
         velocity_curve = vector("list", 0)
     )
     
+    lm_dataframe <- data.frame(
+        term = character(0),
+        estimate = numeric(0),
+        R2 = numeric(0)
+    )
+    
     col_names <- c(
         "AT"="E\nAcceleration\nTime\n[ms]",
         "DT"="E\nDecceleration\nTime\n[ms]",
@@ -139,15 +151,9 @@ server <- function(input, output, session) {
         "filling_energy"="Filling\nEnergy\n[mJ]"
     )
     
-    velocity_dataframe <- dplyr::tibble(id=rep(NA_real_, 100),
-                                        K=rep(NA_real_, 100),
-                                        C=rep(NA_real_, 100),
-                                        x0=rep(NA_real_, 100),
-                                        velocity_curve=vector("list", 100))
-    
+    lm_values <- reactiveValues(data = lm_dataframe)
     dataview_values <- reactiveValues(data = dataview_dataframe)
     summary_values <- reactiveValues(data = dataview_dataframe %>% select(-velocity_curve))
-    velocityvalues <- reactiveValues(data = velocity_dataframe)
     
     .startup_message <- "Everything is correct"
     message_values <- reactiveValues(text = .startup_message)
@@ -215,6 +221,16 @@ server <- function(input, output, session) {
           )
           
           dataview_values$data <- rbind(dataview_values$data, pdf_data)
+          
+          lm_fit <- lm(x0 ~ Epeak,
+                       data = dataview_values$data)
+          
+          lm_tidy <- tidy(lm_fit) %>% 
+              select(term, estimate)
+          
+          R2 <- summary(lm_fit)$r.squared
+          
+          lm_values$data <- cbind(lm_tidy, R2)
 
           mean_values  <- dataview_values$data %>% 
               select(-velocity_curve) %>% 
@@ -290,6 +306,17 @@ server <- function(input, output, session) {
                       digits=1) %>% 
           formatRound(col_names["filling_energy"], digits=2)
   })
+  
+  output$regression <- DT::renderDataTable({
+      DT::datatable(lm_values$data,
+                    class = "compact",
+                    extensions = 'Responsive',
+                    options = list(
+                        dom = ""
+                    )) %>%
+          formatString(1) %>% 
+          formatRound(c(2, 3), digits = 1)
+          })
   
   output$scatterplot <- renderPlotly({
       p_scatterplot <- ggplot(dataview_values$data, aes(x=peak_resistive_force,
