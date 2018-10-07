@@ -1,5 +1,4 @@
 library(shiny)
-library(crosstalk)
 library(shinydashboard)
 library(DT)
 library(ggplot2)
@@ -41,21 +40,21 @@ ui <- dashboardPage(
                 splitLayout(
                     numericInput(
                         inputId = "at_input",
-                        label   = "AT",
+                        label   = "AT [ms]",
                         value   = 0,
                         min     = 0,
                         width   = input_box_width
                     ),
                     numericInput(
                         inputId = "dt_input",
-                        label   = "DT",
+                        label   = "DT [ms]",
                         value   = 0,
                         min     = 0,
                         width   = input_box_width
                     ),
                     numericInput(
                         inputId = "epeak_input",
-                        label   = "Epeak",
+                        label   = "Epeak [m/s]",
                         value   = 0,
                         min     = 0,
                         width   = input_box_width
