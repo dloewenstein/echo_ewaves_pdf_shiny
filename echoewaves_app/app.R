@@ -188,7 +188,7 @@ server <- function(input, output, session) {
                                                               Epeak = input_Epeak)
           
           if (initial_pdf_parameters$C < 0) {
-                  .text <- paste0("Viscoelasticity (C) = ", round(initial_pdf_parameters$C, 1), " is unphysiological")
+                  .text <- "Error: Assigned inputs give unphysiological results"
                   message_values$text <- .text
               return()
           } else {
@@ -252,8 +252,8 @@ server <- function(input, output, session) {
                         "E\nAcceleration\nTime\n[ms]"="AT",
                         "E\nDecceleration\nTime\n[ms]"="DT",
                         "E\nVmax\n[m/s]"="Epeak",
-                        "Stiffness\n(K)\n[g/s2]"="K",
-                        "Viscoelasticity\n(C)\n[cm]"="C",
+                        "Stiffness\n(k)\n[g/s2]"="K",
+                        "Viscoelasticity\n(c)\n[g/s]"="C",
                         "Load\n(x0)\n[cm]"="x0",
                         "Tau\n[ms]"="Tau",
                         "KFEI\n[%]"="KFEI",
