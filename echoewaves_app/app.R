@@ -315,7 +315,7 @@ server <- function(input, output, session) {
                         dom = ""
                     )) %>%
           formatString(1) %>% 
-          formatRound(c(2, 3), digits = 1)
+          formatRound(c(2, 3), digits = 2)
           })
   
   output$scatterplot <- renderPlotly({
