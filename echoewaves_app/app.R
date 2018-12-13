@@ -75,21 +75,9 @@ ui <- dashboardPage(
                 title  = "Results",
                 status = "primary",
                 solidHeader = TRUE,
-                DT::dataTableOutput("dataview")
+                DT::dataTableOutput("dataview"),
+                verbatimTextOutput("dataview_text")
                 )
-        ),
-        fluidRow(
-            box(width  = 8,
-                title  = "Summary",
-                status = "success",
-                solidHeader = TRUE,
-                DT::dataTableOutput("summary")
-            ),
-            box(width = 3,
-                title = "Regression",
-                status = "success",
-                solidHeader = TRUE,
-                DT::dataTableOutput("regression"))
         ),
         fluidRow(
             box(width=6,
@@ -126,13 +114,11 @@ server <- function(input, output, session) {
         peak_resistive_force = numeric(0),
         damping_index = numeric(0),
         filling_energy = numeric(0),
+        M = numeric(0),
+        B = numeric(0),
+        R2 = numeric(0),
+        adj_R2 = numeric(0),
         velocity_curve = vector("list", 0)
-    )
-    
-    lm_dataframe <- data.frame(
-        term = character(0),
-        estimate = numeric(0),
-        R2 = numeric(0)
     )
     
     col_names <- c(
@@ -148,30 +134,38 @@ server <- function(input, output, session) {
         "peak_driving_force"="Peak\nDriving\nForce\n[mN]",
         "peak_resistive_force"="Peak\nResistive\nForce\n[mN]",
         "damping_index"="Damping\nIndex\n[g2/s2]",
-        "filling_energy"="Filling\nEnergy\n[mJ]"
+        "filling_energy"="Filling\nEnergy\n[mJ]",
+        "M" = "M",
+        "B" = "B",
+        "R2" = "R\U00B2",
+        "adj_R2" = "adj R\U00B2"
     )
+# Setup reactive components -------------------------------------------------
     
-    lm_values <- reactiveValues(data = lm_dataframe)
     dataview_values <- reactiveValues(data = dataview_dataframe)
     summary_values <- reactiveValues(data = dataview_dataframe %>% select(-velocity_curve))
     
     .startup_message <- "Everything is correct"
     message_values <- reactiveValues(text = .startup_message)
   
-
+# Main functions -----------------------------------------------------------
     observeEvent(input$enter, {
-# Requisites -------------------------------------------------------------
+## Requisites ---------------------------------------------------------------
+        
+        # when pressing enter (13)
           if (input$enter == 13) {
               TRUE
           } else {
               return()
           }
+          # require entries in AT, DT, Epeak
           req(input$at_input)
           req(input$dt_input)
           req(input$epeak_input)
 
-# Generate PDF variables -------------------------------------------------
+## Generate PDF variables -------------------------------------------------
 
+          # get the input variables
           input_AT <- input$at_input
           input_DT <- input$dt_input
           input_Epeak <- input$epeak_input
@@ -186,7 +180,8 @@ server <- function(input, output, session) {
                                                               AT    = input_AT,
                                                               DT    = input_DT,
                                                               Epeak = input_Epeak)
-          
+## Perform checks ---------------------------------------------------------
+          # check for unphysiological results
           if (initial_pdf_parameters$C < 0) {
                   .text <- "Error: Assigned inputs give unphysiological results"
                   message_values$text <- .text
@@ -194,15 +189,18 @@ server <- function(input, output, session) {
           } else {
               message_values$text <- .startup_message
           }
-          
+
+## Data for plots ---------------------------------------------------------                    
           curve_parameters <- list(K = initial_pdf_parameters$K,
                                    C = initial_pdf_parameters$C,
                                    x0 = initial_pdf_parameters$x0)
+          # generate data for each curve from parameters
           velocity_curve <- purrr::pmap(
               curve_parameters,
               ewave_velocity_fx_time_data
               )
           
+## Prepare data for presentation -------------------------------------------         
           pdf_data <- tibble(
               AT = input_AT,
               DT = input_DT,
@@ -217,20 +215,27 @@ server <- function(input, output, session) {
               peak_resistive_force = secondary_pdf_parameters$peak_resistive_force,
               damping_index = secondary_pdf_parameters$damping_index,
               filling_energy = secondary_pdf_parameters$filling_energy,
+              M = NA,
+              B = NA,
+              R2 = NA,
+              adj_R2 = NA,
               velocity_curve = velocity_curve
           )
           
+          # Combine previous and newly added data
           dataview_values$data <- rbind(dataview_values$data, pdf_data)
           
           lm_fit <- lm(peak_driving_force ~ peak_resistive_force,
                        data = dataview_values$data)
           
-          lm_tidy <- tidy(lm_fit) %>% 
-              select(term, estimate)
-          
-          R2 <- summary(lm_fit)$r.squared
-          
-          lm_values$data <- cbind(lm_tidy, R2)
+          lm_data <- data.frame(
+              # Intercept
+              M = coef(lm_fit)[1],
+              # beta
+              B = coef(lm_fit)[2],
+              R2 = summary(lm_fit)$r.squared,
+              adj_R2 = summary(lm_fit)$adj.r.squared
+          )
 
           mean_values  <- dataview_values$data %>% 
               select(-velocity_curve) %>% 
@@ -240,14 +245,21 @@ server <- function(input, output, session) {
               select(-velocity_curve) %>% 
               summarize_all(sd)
           
+          mean_values$M <- coef(lm_fit)[1] # Intercept
+          mean_values$B <- coef(lm_fit)[2] # Beta
+          mean_values$R2 <- summary(lm_fit)$r.squared
+          mean_values$adj_R2 <- summary(lm_fit)$adj.r.squared
+          
           summary_values$data <- rbind(mean_values, sd_values)
           row.names(summary_values$data) <- c("mean", "sd")
     })
-    
+
+# Rendering ------------------------------------------------------------------    
   output$messages <- renderText({message_values$text})
   
   output$dataview <- DT::renderDataTable({
-      DT::datatable(dataview_values$data %>% select(-velocity_curve),
+      DT::datatable(rbind(data.frame(dataview_values$data %>% select(-velocity_curve)),
+                              summary_values$data),
                     colnames=c(
                         "E\nAcceleration\nTime\n[ms]"="AT",
                         "E\nDecceleration\nTime\n[ms]"="DT",
@@ -261,62 +273,26 @@ server <- function(input, output, session) {
                         "Peak\nDriving\nForce\n[mN]"="peak_driving_force",
                         "Peak\nResistive\nForce\n[mN]"="peak_resistive_force",
                         "Damping\nIndex\n[g2/s2]"="damping_index",
-                        "Filling\nEnergy\n[mJ]"="filling_energy"),
+                        "Filling\nEnergy\n[mJ]"="filling_energy",
+                        "M" = "M",
+                        "B" = "B",
+                        "R\U00B2" = "R2",
+                        "adj R\U00B2" = "adj_R2"),
                     extensions = c('Buttons', 'Responsive'),
                     options = list(
                         dom = 'Brtip',
-                        buttons = c('copy', 'csv', 'excel', 'pdf', 'print')
+                        buttons = c('copy', 'csv', 'excel')
                         ),
                     autoHideNavigation = TRUE,
                     class = "compact"
                     ) %>% 
           formatRound(col_names[c("AT", "DT", "K", "Tau", "damping_index")], digits=0) %>% 
           formatPercentage(col_names["KFEI"], digits=1) %>% 
-          formatRound(col_names[c("C", "x0", "VTI", "peak_driving_force", "peak_resistive_force")],
+          formatRound(col_names[c("Epeak", "C", "x0", "VTI", "peak_driving_force", 
+                                  "peak_resistive_force", "M", "B", "R2", "adj_R2")],
                       digits=1) %>% 
           formatRound(col_names["filling_energy"], digits=2)
   })
-  
-  output$summary <- DT::renderDataTable({
-      DT::datatable(summary_values$data,
-                    colnames=c(
-                        "E\nAcceleration\nTime\n[ms]"="AT",
-                        "E\nDecceleration\nTime\n[ms]"="DT",
-                        "E\nVmax\n[m/s]"="Epeak",
-                        "Stiffness\n(k)\n[g/s2]"="K",
-                        "Viscoelasticity\n(c)\n[g/s]"="C",
-                        "Load\n(x0)\n[cm]"="x0",
-                        "Tau\n[ms]"="Tau",
-                        "KFEI\n[%]"="KFEI",
-                        "VTI\n[cm]"="VTI",
-                        "Peak\nDriving\nForce\n[mN]"="peak_driving_force",
-                        "Peak\nResistive\nForce\n[mN]"="peak_resistive_force",
-                        "Damping\nIndex\n[g2/s2]"="damping_index",
-                        "Filling\nEnergy\n[mJ]"="filling_energy"),
-                    extensions = c('Buttons', 'Responsive'),
-                    options = list(
-                        dom = 'B',
-                        buttons = c('copy', 'csv', 'excel', 'pdf', 'print')
-                    ),
-                    class = "compact"
-      ) %>% 
-          formatRound(col_names[c("AT", "DT", "K", "Tau", "damping_index")], digits=0) %>% 
-          formatPercentage(col_names["KFEI"], digits=1) %>% 
-          formatRound(col_names[c("C", "Epeak", "x0", "VTI", "peak_driving_force", "peak_resistive_force")],
-                      digits=1) %>% 
-          formatRound(col_names["filling_energy"], digits=2)
-  })
-  
-  output$regression <- DT::renderDataTable({
-      DT::datatable(lm_values$data,
-                    class = "compact",
-                    extensions = 'Responsive',
-                    options = list(
-                        dom = ""
-                    )) %>%
-          formatString(1) %>% 
-          formatRound(c(2, 3), digits = 2)
-          })
   
   output$scatterplot <- renderPlotly({
       p_scatterplot <- ggplot(dataview_values$data, aes(x=peak_resistive_force,
