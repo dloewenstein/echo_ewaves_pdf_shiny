@@ -302,39 +302,50 @@ server <- function(input, output, session) {
     observeEvent(input$delete, {
         dataview_values$data <- dataview_values$data[-input$dataview_rows_selected, ]
         
-        lm_fit <- lm(peak_driving_force ~ peak_resistive_force,
-                     data = dataview_values$data)
-        
-        lm_data <- data.frame(
-            # Intercept
-            M = coef(lm_fit)[1],
-            # beta
-            B = coef(lm_fit)[2],
-            R2 = summary(lm_fit)$r.squared,
-            adj_R2 = summary(lm_fit)$adj.r.squared
-        )
-        
-        mean_values  <- dataview_values$data %>% 3
-            select(-velocity_curve) %>% 
-            summarize_all(mean)
-        
-        sd_values    <- dataview_values$data %>% 
-            select(-velocity_curve) %>% 
-            summarize_all(sd)
-        
-        mean_values$M <- coef(lm_fit)[1] # Intercept
-        mean_values$B <- coef(lm_fit)[2] # Beta
-        mean_values$R2 <- summary(lm_fit)$r.squared
-        mean_values$adj_R2 <- summary(lm_fit)$adj.r.squared
-        
-        summary_values$data <- rbind(mean_values, sd_values)
-        row.names(summary_values$data) <- c("mean", "sd")
-        session$sendCustomMessage(type = "refocus", message = list(NULL))
-        
-        
-        updateNumericInput(session, "at_input", value = NA)
-        updateNumericInput(session, "dt_input", value = NA)
-        updateNumericInput(session, "epeak_input", value = NA)
+        if(nrow(dataview_values$data)){
+            
+            lm_fit <- lm(peak_driving_force ~ peak_resistive_force,
+                         data = dataview_values$data)
+            
+            lm_data <- data.frame(
+                # Intercept
+                M = coef(lm_fit)[1],
+                # beta
+                B = coef(lm_fit)[2],
+                R2 = summary(lm_fit)$r.squared,
+                adj_R2 = summary(lm_fit)$adj.r.squared
+            )
+            
+            mean_values  <- dataview_values$data %>%
+                select(-velocity_curve) %>% 
+                summarize_all(mean)
+            
+            sd_values    <- dataview_values$data %>% 
+                select(-velocity_curve) %>% 
+                summarize_all(sd)
+            
+            mean_values$M <- coef(lm_fit)[1] # Intercept
+            mean_values$B <- coef(lm_fit)[2] # Beta
+            mean_values$R2 <- summary(lm_fit)$r.squared
+            mean_values$adj_R2 <- summary(lm_fit)$adj.r.squared
+            
+            summary_values$data <- rbind(mean_values, sd_values)
+            row.names(summary_values$data) <- c("mean", "sd")
+            session$sendCustomMessage(type = "refocus", message = list(NULL))
+            
+            
+            updateNumericInput(session, "at_input", value = NA)
+            updateNumericInput(session, "dt_input", value = NA)
+            updateNumericInput(session, "epeak_input", value = NA)
+        } else {
+            summary_values$data <- dataview_values$data
+            session$sendCustomMessage(type = "refocus", message = list(NULL))
+            
+            
+            updateNumericInput(session, "at_input", value = NA)
+            updateNumericInput(session, "dt_input", value = NA)
+            updateNumericInput(session, "epeak_input", value = NA)   
+        }
     })
 
 # Rendering ------------------------------------------------------------------    
