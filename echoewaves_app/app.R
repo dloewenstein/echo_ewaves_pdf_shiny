@@ -32,13 +32,32 @@ ui <- dashboardPage(
        Shiny.onInputChange("enter", e.which);
     });
                 '),
+        tags$script(
+            'Shiny.addCustomMessageHandler("refocus",
+                                  function(NULL) {
+                                    document.getElementById("at_input").select().focus();
+                                  });'
+        ),
+        tags$style(HTML("
+        input[type=number] {
+              -moz-appearance:textfield;
+        }
+        input[type=number]::{
+              -moz-appearance:textfield;
+        }
+        input[type=number]::-webkit-outer-spin-button,
+        input[type=number]::-webkit-inner-spin-button {
+              -webkit-appearance: none;
+              margin: 0;
+        }
+    ")),
         fluidRow(
-            box(
-                width = 3,
-                title = "Inputs",
+            box(width  = 8,
+                title  = "Results",
                 status = "primary",
                 solidHeader = TRUE,
                 splitLayout(
+                    cellWidths = c(50, 50, 80, 300),
                     numericInput(
                         inputId = "at_input",
                         label   = "AT [ms]",
@@ -59,22 +78,9 @@ ui <- dashboardPage(
                         value   = 0,
                         min     = 0,
                         width   = input_box_width
-                    )
-                )
-            ),
-            box(
-                width = 4,
-                title = "Messages",
-                status = "danger",
-                solidHeader = TRUE,
-                textOutput("messages")
-            )
-        ), 
-        fluidRow(
-            box(width  = 8,
-                title  = "Results",
-                status = "primary",
-                solidHeader = TRUE,
+                    ),
+                    textOutput("messages")
+                ),
                 DT::dataTableOutput("dataview"),
                 verbatimTextOutput("dataview_text")
                 )
@@ -252,6 +258,9 @@ server <- function(input, output, session) {
           
           summary_values$data <- rbind(mean_values, sd_values)
           row.names(summary_values$data) <- c("mean", "sd")
+          
+## Return focus to first input --------------------------------------------
+          session$sendCustomMessage(type="refocus",message=list(NULL))
     })
 
 # Rendering ------------------------------------------------------------------    
