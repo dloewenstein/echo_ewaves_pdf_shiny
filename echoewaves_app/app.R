@@ -195,10 +195,16 @@ server <- function(input, output, session) {
                                                               Epeak = input_Epeak)
 ## Perform checks ---------------------------------------------------------
           # check for unphysiological results
-          if (initial_pdf_parameters$C < 0) {
+          if (initial_pdf_parameters$C < 0 | 
+              input$at_input > 500 |
+              input$at_input < 10 |
+              input$dt_input > 500 |
+              input$dt_input < 10 |
+              input$epeak_input > 5 |
+              input$epeak_input < 0.1) {
                   .text <- "Error: Assigned inputs give unphysiological results"
                   message_values$text <- .text
-                  session$sendCustomMessage(type="refocus",message=list(NULL))
+                  session$sendCustomMessage(type = "refocus", message = list(NULL))
           } else {
               message_values$text <- .startup_message
           
