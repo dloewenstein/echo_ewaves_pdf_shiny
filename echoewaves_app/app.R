@@ -375,7 +375,8 @@ server <- function(input, output, session) {
                     extensions = c('Buttons', 'Responsive'),
                     options = list(
                         dom = 'Brtip',
-                        buttons = c('copy', 'csv', 'excel')
+                        buttons = c('copy', 'csv', 'excel'),
+                        ordering = FALSE
                         ),
                     autoHideNavigation = TRUE,
                     class = "compact"
