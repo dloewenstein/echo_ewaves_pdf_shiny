@@ -191,10 +191,10 @@ server <- function(input, output, session) {
           if (initial_pdf_parameters$C < 0) {
                   .text <- "Error: Assigned inputs give unphysiological results"
                   message_values$text <- .text
-              return()
+                  session$sendCustomMessage(type="refocus",message=list(NULL))
           } else {
               message_values$text <- .startup_message
-          }
+          
 
 ## Data for plots ---------------------------------------------------------                    
           curve_parameters <- list(K = initial_pdf_parameters$K,
@@ -261,7 +261,9 @@ server <- function(input, output, session) {
           
 ## Return focus to first input --------------------------------------------
           session$sendCustomMessage(type="refocus",message=list(NULL))
-    })
+    }
+          }
+)
 
 # Rendering ------------------------------------------------------------------    
   output$messages <- renderText({message_values$text})
