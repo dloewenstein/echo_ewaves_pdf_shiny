@@ -274,7 +274,7 @@ server <- function(input, output, session) {
                         "Peak\nResistive\nForce\n[mN]"="peak_resistive_force",
                         "Damping\nIndex\n[g2/s2]"="damping_index",
                         "Filling\nEnergy\n[mJ]"="filling_energy",
-                        "M" = "M",
+                        "M [mN]" = "M",
                         "B" = "B",
                         "R\U00B2" = "R2",
                         "adj R\U00B2" = "adj_R2"),
@@ -312,7 +312,7 @@ server <- function(input, output, session) {
           example_data <- ewave_velocity_fx_time_data(41.58, 384.36, -0.1586)
           p_velocityplot <- ggplot(example_data, aes(x=x, y=y)) +
               geom_line() +
-              labs(x="Time (s)", y="Velocity (m/s)") +
+              labs(x="Time [s]", y="Velocity [m/s]") +
               annotate("text", x=0.3, y=0.9, label="Example curve", size=10) +
               scale_y_continuous(limit=c(0, 1.2), expand=c(0,0)) +
               scale_x_continuous(limit=c(0, 0.405), expand=c(0,0)) +
@@ -329,11 +329,11 @@ server <- function(input, output, session) {
           
           p_velocityplot <- ggplot(velocity_data, aes(x=x, y=y, colour=id)) +
               geom_line() +
-              labs(x="Time (s)", y="Velocity (m/s)") +
+              labs(x="Time [s]", y="Velocity [m/s]") +
               theme_light() +
               scale_y_continuous(limits = c(0, y_max+0.1), expand = c(0,0)) +
               scale_x_continuous(limits = c(0, 0.405), expand = c(0,0)) +
-              guides(colour=guide_legend(title = "Curve ID"))
+              guides(colour=guide_legend(title = "ID"))
       }
       ggplotly(p_velocityplot)
   })
