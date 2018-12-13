@@ -32,9 +32,14 @@ ui <- dashboardPage(
         ),
         tags$script('
     $(document).on("keydown", function (e) {
-       Shiny.onInputChange("enter", e.which);
+       Shiny.setInputValue("enter", e.which);
     });
                 '),
+        tags$script(
+            '$(document).on("keydown", function () {
+            var logical_var = $("input#epeak_input").is(":focus");
+            Shiny.setInputValue("epeak_focus",logical_var, {priority: "event"});})'
+        ),
         tags$script(
             'Shiny.addCustomMessageHandler("refocus",
                                   function(NULL) {
@@ -156,13 +161,12 @@ server <- function(input, output, session) {
     
     .startup_message <- "Everything is correct"
     message_values <- reactiveValues(text = .startup_message)
-  
 # Main functions -----------------------------------------------------------
     observeEvent(input$enter, {
 ## Requisites ---------------------------------------------------------------
         
         # when pressing enter (13)
-          if (input$enter == 13) {
+          if (input$enter == 13 || ((input$enter == 9) & (input$epeak_focus))) {
               TRUE
           } else {
               return()
