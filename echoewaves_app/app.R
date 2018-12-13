@@ -135,7 +135,7 @@ server <- function(input, output, session) {
         "peak_resistive_force"="Peak\nResistive\nForce\n[mN]",
         "damping_index"="Damping\nIndex\n[g2/s2]",
         "filling_energy"="Filling\nEnergy\n[mJ]",
-        "M [mN]" = "M",
+        "M" = "M [mN]",
         "B" = "B",
         "R2" = "R\U00B2",
         "adj_R2" = "adj R\U00B2"
