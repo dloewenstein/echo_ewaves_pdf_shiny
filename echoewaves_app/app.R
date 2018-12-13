@@ -38,7 +38,7 @@ ui <- dashboardPage(
         tags$script(
             '$(document).on("keydown", function () {
             var logical_var = $("input#epeak_input").is(":focus");
-            Shiny.setInputValue("epeak_focus",logical_var, {priority: "event"});})'
+            Shiny.setInputValue("epeak_focus",logical_var);})'
         ),
         tags$script(
             'Shiny.addCustomMessageHandler("refocus",
@@ -69,22 +69,22 @@ ui <- dashboardPage(
                     numericInput(
                         inputId = "at_input",
                         label   = "AT [ms]",
-                        value   = 0,
-                        min     = 0,
+                        value   = NA,
+                        min     = 10,
                         width   = input_box_width
                     ),
                     numericInput(
                         inputId = "dt_input",
                         label   = "DT [ms]",
-                        value   = 0,
-                        min     = 0,
+                        value   = NA,
+                        min     = 10,
                         width   = input_box_width
                     ),
                     numericInput(
                         inputId = "epeak_input",
                         label   = "Epeak [m/s]",
-                        value   = 0,
-                        min     = 0,
+                        value   = NA,
+                        min     = 0.1,
                         width   = input_box_width
                     ),
                     textOutput("messages")
@@ -167,120 +167,135 @@ server <- function(input, output, session) {
 # Main functions -----------------------------------------------------------
     
     observeEvent(input$enter, {
-## Requisites ---------------------------------------------------------------
+        ## Requisites ---------------------------------------------------------------
         
         # when pressing enter (13)
-          if (input$enter == 13 || ((input$enter == 9) & (input$epeak_focus))) {
-              TRUE
-          } else {
-              return()
-          }
-          # require entries in AT, DT, Epeak
-          req(input$at_input)
-          req(input$dt_input)
-          req(input$epeak_input)
-
-## Generate PDF variables -------------------------------------------------
-
-          # get the input variables
-          input_AT <- input$at_input
-          input_DT <- input$dt_input
-          input_Epeak <- input$epeak_input
-          
-          initial_pdf_parameters <- generate_c_k_x0(AT = input_AT,
-                                                    DT = input_DT,
-                                                    Epeak = input_Epeak)
-          
-          secondary_pdf_parameters <- generate_pdf_parameters(C     = initial_pdf_parameters$C,
-                                                              K     = initial_pdf_parameters$K,
-                                                              x0    = initial_pdf_parameters$x0,
-                                                              AT    = input_AT,
-                                                              DT    = input_DT,
-                                                              Epeak = input_Epeak)
-## Perform checks ---------------------------------------------------------
-          # check for unphysiological results
-          if ((initial_pdf_parameters$C < 0) || 
-              (input$at_input > 500) ||
-              (input$at_input < 10) ||
-              (input$dt_input > 500) ||
-              (input$dt_input < 10) ||
-              (input$epeak_input > 5) ||
-              (input$epeak_input < 0.1)) {
-                  .text <- "Error: Assigned inputs give unphysiological results"
-                  message_values$text <- .text
-                  session$sendCustomMessage(type = "refocus", message = list(NULL))
-          } else {
-              message_values$text <- .startup_message
-          
-
-## Data for plots ---------------------------------------------------------                    
-          curve_parameters <- list(K = initial_pdf_parameters$K,
-                                   C = initial_pdf_parameters$C,
-                                   x0 = initial_pdf_parameters$x0)
-          # generate data for each curve from parameters
-          velocity_curve <- purrr::pmap(
-              curve_parameters,
-              ewave_velocity_fx_time_data
-              )
-          
-## Prepare data for presentation -------------------------------------------         
-          pdf_data <- tibble(
-              AT = input_AT,
-              DT = input_DT,
-              Epeak = input_Epeak,
-              K = initial_pdf_parameters$K,
-              C = initial_pdf_parameters$C,
-              x0 = abs(initial_pdf_parameters$x0) * 100,             #  Convert from meter to cm, present as absolut value
-              Tau = (secondary_pdf_parameters$Tau) * 1000,            #  Convert from seconds to milliseconds
-              KFEI = secondary_pdf_parameters$KFEI,
-              VTI = secondary_pdf_parameters$VTI * 100,               # Convert from meter to cm
-              peak_driving_force = abs(secondary_pdf_parameters$peak_driving_force), #  Present as absolute value
-              peak_resistive_force = secondary_pdf_parameters$peak_resistive_force,
-              damping_index = secondary_pdf_parameters$damping_index,
-              filling_energy = secondary_pdf_parameters$filling_energy,
-              M = NA,
-              B = NA,
-              R2 = NA,
-              adj_R2 = NA,
-              velocity_curve = velocity_curve
-          )
-          
-          # Combine previous and newly added data
-          dataview_values$data <- rbind(dataview_values$data, pdf_data)
-          
-          lm_fit <- lm(peak_driving_force ~ peak_resistive_force,
-                       data = dataview_values$data)
-          
-          lm_data <- data.frame(
-              # Intercept
-              M = coef(lm_fit)[1],
-              # beta
-              B = coef(lm_fit)[2],
-              R2 = summary(lm_fit)$r.squared,
-              adj_R2 = summary(lm_fit)$adj.r.squared
-          )
-
-          mean_values  <- dataview_values$data %>% 
-              select(-velocity_curve) %>% 
-              summarize_all(mean)
-          
-          sd_values    <- dataview_values$data %>% 
-              select(-velocity_curve) %>% 
-              summarize_all(sd)
-          
-          mean_values$M <- coef(lm_fit)[1] # Intercept
-          mean_values$B <- coef(lm_fit)[2] # Beta
-          mean_values$R2 <- summary(lm_fit)$r.squared
-          mean_values$adj_R2 <- summary(lm_fit)$adj.r.squared
-          
-          summary_values$data <- rbind(mean_values, sd_values)
-          row.names(summary_values$data) <- c("mean", "sd")
-          
-## Return focus to first input --------------------------------------------
-          session$sendCustomMessage(type="refocus",message=list(NULL))
+        if (input$enter == 13 || ((input$enter == 9) & (input$epeak_focus))) {
+            TRUE
+        } else {
+            return()
+        }
+        # require entries in AT, DT, Epeak
+        req(input$at_input)
+        req(input$dt_input)
+        req(input$epeak_input)
+        
+        ## Generate PDF variables -------------------------------------------------
+        
+        if ((input$at_input > 500) ||
+            (input$at_input < 10) ||
+            (input$dt_input > 500) ||
+            (input$dt_input < 10) ||
+            (input$epeak_input > 5) ||
+            (input$epeak_input < 0.1)) {
+            
+            .text <- "Error: Assigned inputs give unphysiological results"
+            message_values$text <- .text
+            session$sendCustomMessage(type = "refocus", message = list(NULL))
+            
+        } else {
+            
+            message_values$text <- .startup_message
+            # get the input variables
+            input_AT <- input$at_input
+            input_DT <- input$dt_input
+            input_Epeak <- input$epeak_input
+            
+            initial_pdf_parameters <- generate_c_k_x0(AT = input_AT,
+                                                      DT = input_DT,
+                                                      Epeak = input_Epeak)
+            
+            secondary_pdf_parameters <- generate_pdf_parameters(C     = initial_pdf_parameters$C,
+                                                                K     = initial_pdf_parameters$K,
+                                                                x0    = initial_pdf_parameters$x0,
+                                                                AT    = input_AT,
+                                                                DT    = input_DT,
+                                                                Epeak = input_Epeak)
+            ## Perform checks ---------------------------------------------------------
+            # check for unphysiological results
+            if (initial_pdf_parameters$C < 0) {
+                .text <- "Error: Assigned inputs give unphysiological results"
+                message_values$text <- .text
+                session$sendCustomMessage(type = "refocus", message = list(NULL))
+            } else {
+                message_values$text <- .startup_message
+                
+                
+                ## Data for plots ---------------------------------------------------------                    
+                curve_parameters <- list(K = initial_pdf_parameters$K,
+                                         C = initial_pdf_parameters$C,
+                                         x0 = initial_pdf_parameters$x0)
+                # generate data for each curve from parameters
+                velocity_curve <- purrr::pmap(
+                    curve_parameters,
+                    ewave_velocity_fx_time_data
+                )
+                
+                ## Prepare data for presentation -------------------------------------------         
+                pdf_data <- tibble(
+                    AT = input_AT,
+                    DT = input_DT,
+                    Epeak = input_Epeak,
+                    K = initial_pdf_parameters$K,
+                    C = initial_pdf_parameters$C,
+                    x0 = abs(initial_pdf_parameters$x0) * 100,             #  Convert from meter to cm, present as absolut value
+                    Tau = (secondary_pdf_parameters$Tau) * 1000,            #  Convert from seconds to milliseconds
+                    KFEI = secondary_pdf_parameters$KFEI,
+                    VTI = secondary_pdf_parameters$VTI * 100,               # Convert from meter to cm
+                    peak_driving_force = abs(secondary_pdf_parameters$peak_driving_force), #  Present as absolute value
+                    peak_resistive_force = secondary_pdf_parameters$peak_resistive_force,
+                    damping_index = secondary_pdf_parameters$damping_index,
+                    filling_energy = secondary_pdf_parameters$filling_energy,
+                    M = NA,
+                    B = NA,
+                    R2 = NA,
+                    adj_R2 = NA,
+                    velocity_curve = velocity_curve
+                )
+                
+                # Combine previous and newly added data
+                dataview_values$data <- rbind(dataview_values$data, pdf_data)
+                
+                lm_fit <- lm(peak_driving_force ~ peak_resistive_force,
+                             data = dataview_values$data)
+                
+                lm_data <- data.frame(
+                    # Intercept
+                    M = coef(lm_fit)[1],
+                    # beta
+                    B = coef(lm_fit)[2],
+                    R2 = summary(lm_fit)$r.squared,
+                    adj_R2 = summary(lm_fit)$adj.r.squared
+                )
+                
+                mean_values  <- dataview_values$data %>% 
+                    select(-velocity_curve) %>% 
+                    summarize_all(mean)
+                
+                sd_values    <- dataview_values$data %>% 
+                    select(-velocity_curve) %>% 
+                    summarize_all(sd)
+                
+                mean_values$M <- coef(lm_fit)[1] # Intercept
+                mean_values$B <- coef(lm_fit)[2] # Beta
+                mean_values$R2 <- summary(lm_fit)$r.squared
+                mean_values$adj_R2 <- summary(lm_fit)$adj.r.squared
+                
+                summary_values$data <- rbind(mean_values, sd_values)
+                row.names(summary_values$data) <- c("mean", "sd")
+                
+                
+                ## Return focus to first input --------------------------------------------
+                session$sendCustomMessage(type ="refocus",message = list(NULL))
+                
+                updateNumericInput(session, "at_input", value = NA)
+                updateNumericInput(session, "dt_input", value = NA)
+                updateNumericInput(session, "epeak_input", value = NA)
+            }
+        }
+        
     }
-          }
-)
+    )
 
 # On delete function ----------------------------------------------------------
     
@@ -299,7 +314,7 @@ server <- function(input, output, session) {
             adj_R2 = summary(lm_fit)$adj.r.squared
         )
         
-        mean_values  <- dataview_values$data %>% 
+        mean_values  <- dataview_values$data %>% 3
             select(-velocity_curve) %>% 
             summarize_all(mean)
         
@@ -315,6 +330,11 @@ server <- function(input, output, session) {
         summary_values$data <- rbind(mean_values, sd_values)
         row.names(summary_values$data) <- c("mean", "sd")
         session$sendCustomMessage(type = "refocus", message = list(NULL))
+        
+        
+        updateNumericInput(session, "at_input", value = NA)
+        updateNumericInput(session, "dt_input", value = NA)
+        updateNumericInput(session, "epeak_input", value = NA)
     })
 
 # Rendering ------------------------------------------------------------------    
