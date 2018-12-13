@@ -289,9 +289,9 @@ server <- function(input, output, session) {
           formatRound(col_names[c("AT", "DT", "K", "Tau", "damping_index")], digits=0) %>% 
           formatPercentage(col_names["KFEI"], digits=1) %>% 
           formatRound(col_names[c("Epeak", "C", "x0", "VTI", "peak_driving_force", 
-                                  "peak_resistive_force", "M", "B", "R2", "adj_R2")],
+                                  "peak_resistive_force", "M", "B")],
                       digits=1) %>% 
-          formatRound(col_names["filling_energy"], digits=2)
+          formatRound(col_names[c("filling_energy", "R2", "adj_R2")], digits=2)
   })
   
   output$scatterplot <- renderPlotly({
