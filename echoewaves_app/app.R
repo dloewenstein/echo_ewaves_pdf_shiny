@@ -90,7 +90,11 @@ ui <- dashboardPage(
                     textOutput("messages")
                 ),
                 DT::dataTableOutput("dataview"),
-                verbatimTextOutput("dataview_text")
+                actionButton(
+                    inputId = "delete",
+                    label = "Delete selected",
+                    icon = icon("trash")
+                )
                 )
         ),
         fluidRow(
@@ -158,10 +162,10 @@ server <- function(input, output, session) {
     
     dataview_values <- reactiveValues(data = dataview_dataframe)
     summary_values <- reactiveValues(data = dataview_dataframe %>% select(-velocity_curve))
-    
     .startup_message <- "Everything is correct"
     message_values <- reactiveValues(text = .startup_message)
 # Main functions -----------------------------------------------------------
+    
     observeEvent(input$enter, {
 ## Requisites ---------------------------------------------------------------
         
@@ -195,13 +199,13 @@ server <- function(input, output, session) {
                                                               Epeak = input_Epeak)
 ## Perform checks ---------------------------------------------------------
           # check for unphysiological results
-          if (initial_pdf_parameters$C < 0 | 
-              input$at_input > 500 |
-              input$at_input < 10 |
-              input$dt_input > 500 |
-              input$dt_input < 10 |
-              input$epeak_input > 5 |
-              input$epeak_input < 0.1) {
+          if ((initial_pdf_parameters$C < 0) || 
+              (input$at_input > 500) ||
+              (input$at_input < 10) ||
+              (input$dt_input > 500) ||
+              (input$dt_input < 10) ||
+              (input$epeak_input > 5) ||
+              (input$epeak_input < 0.1)) {
                   .text <- "Error: Assigned inputs give unphysiological results"
                   message_values$text <- .text
                   session$sendCustomMessage(type = "refocus", message = list(NULL))
@@ -277,6 +281,41 @@ server <- function(input, output, session) {
     }
           }
 )
+
+# On delete function ----------------------------------------------------------
+    
+    observeEvent(input$delete, {
+        dataview_values$data <- dataview_values$data[-input$dataview_rows_selected, ]
+        
+        lm_fit <- lm(peak_driving_force ~ peak_resistive_force,
+                     data = dataview_values$data)
+        
+        lm_data <- data.frame(
+            # Intercept
+            M = coef(lm_fit)[1],
+            # beta
+            B = coef(lm_fit)[2],
+            R2 = summary(lm_fit)$r.squared,
+            adj_R2 = summary(lm_fit)$adj.r.squared
+        )
+        
+        mean_values  <- dataview_values$data %>% 
+            select(-velocity_curve) %>% 
+            summarize_all(mean)
+        
+        sd_values    <- dataview_values$data %>% 
+            select(-velocity_curve) %>% 
+            summarize_all(sd)
+        
+        mean_values$M <- coef(lm_fit)[1] # Intercept
+        mean_values$B <- coef(lm_fit)[2] # Beta
+        mean_values$R2 <- summary(lm_fit)$r.squared
+        mean_values$adj_R2 <- summary(lm_fit)$adj.r.squared
+        
+        summary_values$data <- rbind(mean_values, sd_values)
+        row.names(summary_values$data) <- c("mean", "sd")
+        session$sendCustomMessage(type = "refocus", message = list(NULL))
+    })
 
 # Rendering ------------------------------------------------------------------    
   output$messages <- renderText({message_values$text})
