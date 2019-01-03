@@ -19,6 +19,7 @@ RUN R -e "install.packages(c('devtools', 'plotly', 'DT', 'broom'), repos='https:
 
 ADD /echoewaves_app /srv/shiny-server/
 
+# Port to expose
 EXPOSE 3838
 
 RUN ["chmod", "+x", "/usr/bin/shiny-server.sh"]
