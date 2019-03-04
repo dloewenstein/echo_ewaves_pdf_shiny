@@ -1,0 +1,10 @@
+Package: echoewaves.app
+Title: Shiny App For Analysis Of Diastolic Function Using The Parameterized Diastolic Filling (PDF) Method
+Version: 0.1
+Authors@R: person("Daniel", "Loewenstein", email = "loewenstein.daniel@gmail.com",
+                  role = c("aut", "cre"))
+Description: Deployes shiny app for PDF methods
+Depends: R (>= 3.1.0)
+License: MIT
+LazyData: true
+Suggests: testthat
