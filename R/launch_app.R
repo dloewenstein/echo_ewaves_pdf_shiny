@@ -4,7 +4,7 @@
 #' @export
 #'
 #' @examples
-#' ewavesPDFshiny::launch_app()
+#' 
 #' 
 launch_app <- function() {
     required_pkgs <- c(

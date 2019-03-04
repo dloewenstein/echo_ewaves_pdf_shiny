@@ -1,3 +1,13 @@
+#' Shiny app server function
+#'
+#' @param input provided by shiny
+#' @param output provided by shiny
+#' @param session provided by shiny
+
+
+# Define server logic required to draw a histogram
+
+
 shiny_server <- function(input, output, session) {
     
     dataview_dataframe <- tibble(
