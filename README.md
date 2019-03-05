@@ -5,28 +5,39 @@ filling (PDF) method
 ## Project overview
 ```
 echo_ewaves_pdf_shiny_app/
+├── DESCRIPTION
 ├── Dockerfile
-├── echoewaves_app
-│   ├── app.R
-│   ├── R
-│   │   ├── color_renderer.R
-│   │   ├── curve_fit.R
-│   │   ├── ewave_velocity_fx_time.R
-│   │   ├── fzero.R
-│   │   ├── generate_initial_pdf_parameters.R
-│   │   └── generate_pdf_parameters.R
-│   └── tests
+├── echoewaves_app.Rproj
+├── inst
+│   ├── java
+│   │   └── googleanalytics.js
+│   └── shinyApp
+│       ├── app.R
+│       ├── shiny-server.conf
+│       └── shiny-server.sh
 ├── LICENSE
+├── R
+│   ├── color_renderer.R
+│   ├── curve_fit.R
+│   ├── ewave_velocity_fx_time.R
+│   ├── fzero.R
+│   ├── generate_initial_pdf_parameters.R
+│   ├── generate_pdf_parameters.R
+│   ├── launch_app.R
+│   ├── shiny_server.R
+│   └── shiny_ui.R
 ├── README.md
-├── shiny-server.conf
-└── shiny-server.sh
+├── tests
+    ├── testthat
+    │   └── test-generate_c_k_x0.R
+    └── testthat.R
 ```
 
 ## Introduction
 Echo E-waves is a freely available software application for the analysis of
 diastolic function using the parameterized diastolic filling (PDF) method.
 
-[Download page](http://echoewaves.org/downloads/)  
+[Download page](http://echoewaves.org/downloads/)
 A description of the program and its usage can be found
 [here](https://bmcmedimaging.biomedcentral.com/articles/10.1186/s12880-016-0162-8).
 
@@ -51,7 +62,7 @@ This shiny app is setup up on Google Cloud Platform (GCP) Compute Engine VM inst
 
 Specs:
 
-- Machine type: g1-small (1 vCPU, 1.7 GB memory)  
+- Machine type: g1-small (1 vCPU, 1.7 GB memory)
 - Disk: 10 GB
 - OS: Ubuntu 16.04 x64
 
