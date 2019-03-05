@@ -4,5 +4,3 @@ language: R
 sudo: false
 script: make readme
 cache: packages
-r:
-  -release
