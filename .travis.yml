@@ -6,3 +6,4 @@ script: make readme
 cache: packages
 after_success:
   - Rscript -e 'covr::codecov()'
+  - .travis/push.sh

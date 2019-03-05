@@ -13,6 +13,7 @@ knitr::opts_chunk$set(
 
 # Echo E-Waves Shiny app
 [![Travis-CI Build Status](https://travis-ci.org/dloewenstein/echo_ewaves_pdf_shiny.svg?branch=master)](https://travis-ci.org/dloewenstein/echo_ewaves_pdf_shiny)
+[![Coverage Status](https://img.shields.io/codecov/c/github/dloewenstein/ewavesPDFshiny/master.svg)](https://codecov.io/github/dloewenstein/ewavesPDFshiny?branch=master)
 
 Shiny app for analysis of diastolic function using the parameterized diastolic
 filling (PDF) method
