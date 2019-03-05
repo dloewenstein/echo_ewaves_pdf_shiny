@@ -1,1 +1,0 @@
-ewavesPDFshiny::launch_app()

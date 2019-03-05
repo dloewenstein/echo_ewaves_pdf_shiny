@@ -1,15 +1,11 @@
-#' Shiny app server function
-#'
-#' @param input provided by shiny
-#' @param output provided by shiny
-#' @param session provided by shiny
-
-
-# Define server logic required to draw a histogram
-
+library(shiny)
+library(dplyr)
+library(ggplot2)
+library(plotly)
+library(purrr)
 
 shiny_server <- function(input, output, session) {
-    
+
     dataview_dataframe <- tibble(
         AT = numeric(0),
         DT = numeric(0),
@@ -30,7 +26,7 @@ shiny_server <- function(input, output, session) {
         adj_R2 = numeric(0),
         velocity_curve = vector("list", 0)
     )
-    
+
     col_names <- c(
         "AT"="E\nAcceleration\nTime\n[ms]",
         "DT"="E\nDecceleration\nTime\n[ms]",
@@ -51,16 +47,16 @@ shiny_server <- function(input, output, session) {
         "adj_R2" = "adj R\U00B2"
     )
     # Setup reactive components -------------------------------------------------
-    
+
     dataview_values <- reactiveValues(data = dataview_dataframe)
     summary_values <- reactiveValues(data = dataview_dataframe %>% select(-velocity_curve))
     .startup_message <- "Everything is correct"
     message_values <- reactiveValues(text = .startup_message)
     # Main functions -----------------------------------------------------------
-    
+
     observeEvent(input$enter, {
         ## Requisites ---------------------------------------------------------------
-        
+
         # when pressing enter (13)
         if (input$enter == 13 || ((input$enter == 9) & (input$epeak_focus))) {
             TRUE
@@ -71,32 +67,32 @@ shiny_server <- function(input, output, session) {
         req(input$at_input)
         req(input$dt_input)
         req(input$epeak_input)
-        
+
         ## Generate PDF variables -------------------------------------------------
-        
+
         if ((input$at_input > 500) ||
             (input$at_input < 10) ||
             (input$dt_input > 500) ||
             (input$dt_input < 10) ||
             (input$epeak_input > 5) ||
             (input$epeak_input < 0.1)) {
-            
+
             .text <- "Error: Assigned inputs give unphysiological results"
             message_values$text <- .text
             session$sendCustomMessage(type = "refocus", message = list(NULL))
-            
+
         } else {
-            
+
             message_values$text <- .startup_message
             # get the input variables
             input_AT <- input$at_input
             input_DT <- input$dt_input
             input_Epeak <- input$epeak_input
-            
+
             initial_pdf_parameters <- generate_c_k_x0(AT = input_AT,
                                                       DT = input_DT,
                                                       Epeak = input_Epeak)
-            
+
             secondary_pdf_parameters <- generate_pdf_parameters(C     = initial_pdf_parameters$C,
                                                                 K     = initial_pdf_parameters$K,
                                                                 x0    = initial_pdf_parameters$x0,
@@ -111,9 +107,9 @@ shiny_server <- function(input, output, session) {
                 session$sendCustomMessage(type = "refocus", message = list(NULL))
             } else {
                 message_values$text <- .startup_message
-                
-                
-                ## Data for plots ---------------------------------------------------------                    
+
+
+                ## Data for plots ---------------------------------------------------------
                 curve_parameters <- list(K = initial_pdf_parameters$K,
                                          C = initial_pdf_parameters$C,
                                          x0 = initial_pdf_parameters$x0)
@@ -122,8 +118,8 @@ shiny_server <- function(input, output, session) {
                     curve_parameters,
                     ewave_velocity_fx_time_data
                 )
-                
-                ## Prepare data for presentation -------------------------------------------         
+
+                ## Prepare data for presentation -------------------------------------------
                 pdf_data <- tibble(
                     AT = input_AT,
                     DT = input_DT,
@@ -144,13 +140,13 @@ shiny_server <- function(input, output, session) {
                     adj_R2 = NA,
                     velocity_curve = velocity_curve
                 )
-                
+
                 # Combine previous and newly added data
                 dataview_values$data <- rbind(dataview_values$data, pdf_data)
-                
+
                 lm_fit <- lm(peak_driving_force ~ peak_resistive_force,
                              data = dataview_values$data)
-                
+
                 lm_data <- data.frame(
                     # Intercept
                     M = coef(lm_fit)[1],
@@ -159,46 +155,46 @@ shiny_server <- function(input, output, session) {
                     R2 = summary(lm_fit)$r.squared,
                     adj_R2 = summary(lm_fit)$adj.r.squared
                 )
-                
-                mean_values  <- dataview_values$data %>% 
-                    select(-velocity_curve) %>% 
+
+                mean_values  <- dataview_values$data %>%
+                    select(-velocity_curve) %>%
                     summarize_all(mean)
-                
-                sd_values    <- dataview_values$data %>% 
-                    select(-velocity_curve) %>% 
+
+                sd_values    <- dataview_values$data %>%
+                    select(-velocity_curve) %>%
                     summarize_all(sd)
-                
+
                 mean_values$M <- coef(lm_fit)[1] # Intercept
                 mean_values$B <- coef(lm_fit)[2] # Beta
                 mean_values$R2 <- summary(lm_fit)$r.squared
                 mean_values$adj_R2 <- summary(lm_fit)$adj.r.squared
-                
+
                 summary_values$data <- rbind(mean_values, sd_values)
                 row.names(summary_values$data) <- c("mean", "sd")
-                
-                
+
+
                 ## Return focus to first input --------------------------------------------
                 session$sendCustomMessage(type ="refocus",message = list(NULL))
-                
+
                 updateNumericInput(session, "at_input", value = NA)
                 updateNumericInput(session, "dt_input", value = NA)
                 updateNumericInput(session, "epeak_input", value = NA)
             }
         }
-        
+
     }
     )
-    
+
     # On delete function ----------------------------------------------------------
-    
+
     observeEvent(input$delete, {
         dataview_values$data <- dataview_values$data[-input$dataview_rows_selected, ]
-        
+
         if(nrow(dataview_values$data)){
-            
+
             lm_fit <- lm(peak_driving_force ~ peak_resistive_force,
                          data = dataview_values$data)
-            
+
             lm_data <- data.frame(
                 # Intercept
                 M = coef(lm_fit)[1],
@@ -207,42 +203,42 @@ shiny_server <- function(input, output, session) {
                 R2 = summary(lm_fit)$r.squared,
                 adj_R2 = summary(lm_fit)$adj.r.squared
             )
-            
+
             mean_values  <- dataview_values$data %>%
-                select(-velocity_curve) %>% 
+                select(-velocity_curve) %>%
                 summarize_all(mean)
-            
-            sd_values    <- dataview_values$data %>% 
-                select(-velocity_curve) %>% 
+
+            sd_values    <- dataview_values$data %>%
+                select(-velocity_curve) %>%
                 summarize_all(sd)
-            
+
             mean_values$M <- coef(lm_fit)[1] # Intercept
             mean_values$B <- coef(lm_fit)[2] # Beta
             mean_values$R2 <- summary(lm_fit)$r.squared
             mean_values$adj_R2 <- summary(lm_fit)$adj.r.squared
-            
+
             summary_values$data <- rbind(mean_values, sd_values)
             row.names(summary_values$data) <- c("mean", "sd")
             session$sendCustomMessage(type = "refocus", message = list(NULL))
-            
-            
+
+
             updateNumericInput(session, "at_input", value = NA)
             updateNumericInput(session, "dt_input", value = NA)
             updateNumericInput(session, "epeak_input", value = NA)
         } else {
             summary_values$data <- dataview_values$data
             session$sendCustomMessage(type = "refocus", message = list(NULL))
-            
-            
+
+
             updateNumericInput(session, "at_input", value = NA)
             updateNumericInput(session, "dt_input", value = NA)
-            updateNumericInput(session, "epeak_input", value = NA)   
+            updateNumericInput(session, "epeak_input", value = NA)
         }
     })
-    
-    # Rendering ------------------------------------------------------------------    
+
+    # Rendering ------------------------------------------------------------------
     output$messages <- renderText({message_values$text})
-    
+
     output$dataview <- DT::renderDataTable({
         DT::datatable(rbind(data.frame(dataview_values$data %>% select(-velocity_curve)),
                             summary_values$data),
@@ -272,15 +268,15 @@ shiny_server <- function(input, output, session) {
                       ),
                       autoHideNavigation = TRUE,
                       class = "compact"
-        ) %>% 
-            formatRound(col_names[c("AT", "DT", "K", "Tau", "damping_index")], digits=0) %>% 
-            formatPercentage(col_names["KFEI"], digits=1) %>% 
-            formatRound(col_names[c("C", "x0", "VTI", "peak_driving_force", 
+        ) %>%
+            formatRound(col_names[c("AT", "DT", "K", "Tau", "damping_index")], digits=0) %>%
+            formatPercentage(col_names["KFEI"], digits=1) %>%
+            formatRound(col_names[c("C", "x0", "VTI", "peak_driving_force",
                                     "peak_resistive_force", "M", "B")],
-                        digits=1) %>% 
+                        digits=1) %>%
             formatRound(col_names[c("Epeak", "filling_energy", "R2", "adj_R2")], digits=2)
     })
-    
+
     output$scatterplot <- renderPlotly({
         p_scatterplot <- ggplot(dataview_values$data, aes(x=peak_resistive_force,
                                                           y=peak_driving_force)) +
@@ -290,10 +286,10 @@ shiny_server <- function(input, output, session) {
                  x="Peak Resistive Force [mN]",
                  parse=TRUE) +
             theme_light()
-        
+
         ggplotly(p_scatterplot)
     })
-    
+
     output$velocityplot <- renderPlotly({
         if(!nrow(dataview_values$data)){
             example_data <- ewave_velocity_fx_time_data(41.58, 384.36, -0.1586)
@@ -305,15 +301,15 @@ shiny_server <- function(input, output, session) {
                 scale_x_continuous(limits=c(0, 0.405), expand=c(0,0)) +
                 theme_light()
         } else{
-            velocity_data <- dataview_values$data %>% 
+            velocity_data <- dataview_values$data %>%
                 select(velocity_curve) %>%
-                mutate(id = row.names(.)) %>% 
+                mutate(id = row.names(.)) %>%
                 unnest(velocity_curve)
-            
+
             y_max <- velocity_data %>%
-                pull(y) %>% 
+                pull(y) %>%
                 max(., na.rm = TRUE)
-            
+
             p_velocityplot <- ggplot(velocity_data, aes(x=x, y=y, colour=id)) +
                 geom_line() +
                 labs(x="Time [s]", y="Velocity [m/s]") +
@@ -324,6 +320,6 @@ shiny_server <- function(input, output, session) {
         }
         ggplotly(p_velocityplot)
     })
-    
+
     session$allowReconnect(TRUE)
 }

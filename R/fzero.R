@@ -1,8 +1,17 @@
-##
-##  f z e r o . R
-##
-
-
+#' fzero
+#'
+#' Root of nonlinear function ported from matlab
+#'
+#' @param f Function to solve
+#' @param x Initial value, specified as a numeric or a 2-element vector
+#' @param ... Further options for solution process
+#' @param maxiter Maximum number of iterations (default: 100)
+#' @param tol Tolerance settings (default: .Machine$double.eps^(1/2))
+#'
+#' @return
+#' @export
+#'
+#' @examples
 fzero <- function(f, x, ..., maxiter = 100, tol = .Machine$double.eps^(1/2)) {
     if (!is.numeric(x) || length(x) > 2)
         stop("Argument 'x' must be a scalar or a vector of length 2.")
@@ -74,7 +83,7 @@ fzero <- function(f, x, ..., maxiter = 100, tol = .Machine$double.eps^(1/2)) {
     if (a > b) {
         tt <- a; a <- b; b <- tt
     }
-    fa <- f(a); fb <- f(b) 
+    fa <- f(a); fb <- f(b)
     nfev <- 2
     if (sign(fa) * sign(fb) > 0)
         stop("Function must differ in sign at interval endpoints.")
@@ -143,8 +152,8 @@ fzero <- function(f, x, ..., maxiter = 100, tol = .Machine$double.eps^(1/2)) {
                     }
                 }
             }
-            itype <- itype + 1 
-            
+            itype <- itype + 1
+
         } else if (itype == 4) {
             # Double secant step.
             c <- u - 2*(b - a)/(fb - fa)*fu
@@ -175,7 +184,7 @@ fzero <- function(f, x, ..., maxiter = 100, tol = .Machine$double.eps^(1/2)) {
 
         # Mod2: skip inverse cubic interpolation if nonmonotonicity is detected.
         if (sign(fc - fa) * sign(fc - fb) >= 0) {
-          ## The new point broke monotonicity. 
+          ## The new point broke monotonicity.
           ## Disable inverse cubic.
           fe <- fc
         } else {

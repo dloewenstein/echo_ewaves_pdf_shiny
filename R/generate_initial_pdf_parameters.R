@@ -1,8 +1,8 @@
 #' Generate viscoelastic energyloss, stiffness, and load
 #'
-#' @param AT E acceleration time
-#' @param DT E decelleration time
-#' @param Epeak E peak velocity
+#' @param AT E acceleration time (milliseconds)
+#' @param DT E decelleration time (milliseconds)
+#' @param Epeak E peak velocity (meter/second)
 #'
 #' @return
 #' @export

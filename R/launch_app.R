@@ -4,19 +4,13 @@
 #' @export
 #'
 #' @examples
-#' 
-#' 
+#'
+#'
 launch_app <- function() {
-    required_pkgs <- c(
-        "shiny",
-        "shinydashboard",
-        "DT",
-        "ggplot2",
-        "plotly",
-        "dplyr",
-        "tidyr",
-        "broom"
-    )
-    
-    shinyApp(ui = shiny_ui, server = shiny_server)
+    app_dir <- system.file("shinyApp", package = "ewavesPDFshiny")
+    if(app_dir == "") {
+        stop("Could not find shinyApp directory. Try reinstalling `ewavesPDFshiny`.",
+             call. = FALSE)
+    }
+    shiny::runApp(app_dir, display.mode = "normal")
 }

@@ -18,3 +18,4 @@ Imports: dplyr,
     ggplot2,
     DT,
     rmarkdown
+RoxygenNote: 6.1.0
