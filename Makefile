@@ -1,5 +1,5 @@
 readme: README.Rmd
-  Rscript -e 'rmarkdown::render("$<")'
+	Rscript -e 'rmarkdown::render("$<")'
 
 clean:
-  rm -rf *.html *.md *.docx figure/ cache/
+	rm -rf *.html *.md *.docx 
