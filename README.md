@@ -4,7 +4,7 @@
 # Echo E-Waves Shiny app
 
 [![Travis-CI Build
-Status](https://travis-ci.org/dloewenstein/echo_ewaves_pdf_shiny.svg?branch=master)](https://travis-ci.org/dloewenstein/echo_ewaves_pdf_shiny)
+Status](https://travis-ci.org/dloewenstein/ewavesPDFshiny.svg?branch=master)](https://travis-ci.org/dloewenstein/ewavesPDFshiny)
 [![Coverage
 Status](https://img.shields.io/codecov/c/github/dloewenstein/ewavesPDFshiny/master.svg)](https://codecov.io/github/dloewenstein/ewavesPDFshiny?branch=master)
 
