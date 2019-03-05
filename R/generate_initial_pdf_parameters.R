@@ -1,3 +1,14 @@
+#' Generate viscoelastic energyloss, stiffness, and load
+#'
+#' @param AT E acceleration time
+#' @param DT E decelleration time
+#' @param Epeak E peak velocity
+#'
+#' @return
+#' @export
+#'
+#' @examples
+#' generate_c_k_x0(AT = 50, DT = 200, Epeak = 1.1)
 generate_c_k_x0 <- function(AT, DT, Epeak){
     AT <- AT/1000
     DT <- DT/1000

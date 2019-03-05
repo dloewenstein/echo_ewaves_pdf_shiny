@@ -13,11 +13,12 @@ RUN apt-get update && apt-get install -y \
     libgit2-dev
 
 
-RUN R -e "install.packages(c('devtools', 'plotly', 'DT', 'broom'), repos='https://cloud.r-project.org/')" && \
+RUN R -e "install.packages(c('devtools', 'plotly', 'DT', 'broom', 'dplyr', 'tidyr', 'shiny'), repos='https://cloud.r-project.org/')" && \
     R -e "devtools::install_github('hadley/ggplot2')" && \
-    R -e "devtools::install_github('rstudio/shinydashboard')"
+    R -e "devtools::install_github('rstudio/shinydashboard')" && \
+    R -e "devtools::install_github('dloewenstein/echo_ewaves_pdf_shiny')"
 
-ADD /echoewaves_app /srv/shiny-server/
+ADD /inst/shinyApp /srv/shiny-server/
 
 # Port to expose
 EXPOSE 3838
