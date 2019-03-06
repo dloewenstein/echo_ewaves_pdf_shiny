@@ -11,36 +11,6 @@ Status](https://img.shields.io/codecov/c/github/dloewenstein/ewavesPDFshiny/mast
 Shiny app for analysis of diastolic function using the parameterized
 diastolic filling (PDF) method
 
-## Project overview
-
-    echo_ewaves_pdf_shiny_app/
-    ├── DESCRIPTION
-    ├── Dockerfile
-    ├── echoewaves_app.Rproj
-    ├── inst
-    │   ├── java
-    │   │   └── googleanalytics.js
-    │   └── shinyApp
-    │       ├── app.R
-    │       ├── shiny-server.conf
-    │       └── shiny-server.sh
-    ├── LICENSE
-    ├── R
-    │   ├── color_renderer.R
-    │   ├── curve_fit.R
-    │   ├── ewave_velocity_fx_time.R
-    │   ├── fzero.R
-    │   ├── generate_initial_pdf_parameters.R
-    │   ├── generate_pdf_parameters.R
-    │   ├── launch_app.R
-    │   ├── shiny_server.R
-    │   └── shiny_ui.R
-    ├── README.md
-    ├── tests
-        ├── testthat
-        │   └── test-generate_c_k_x0.R
-        └── testthat.R
-
 ## Introduction
 
 Echo E-waves is a freely available software application for the analysis
