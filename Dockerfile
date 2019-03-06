@@ -8,6 +8,8 @@ RUN apt-get update && apt-get install -y \
 			    libcurl4-gnutls-dev \
 			        libcairo2-dev \
 				    libxt-dev \
+				    libssl-dev \
+				    libgit2-dev \
 				        wget
 
 # Download and install shiny server
