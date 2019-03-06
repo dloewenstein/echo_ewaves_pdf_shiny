@@ -1,5 +1,5 @@
-FROM rocker/shiny #redo
-
+FROM rocker/shiny
+#redo
 RUN apt-get update && apt-get install -y \
     sudo \
     gdebi-core \
