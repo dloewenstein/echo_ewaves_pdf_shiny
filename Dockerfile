@@ -17,10 +17,10 @@ RUN wget --no-verbose https://download3.rstudio.org/ubuntu-14.04/x86_64/VERSION 
 		    gdebi -n ss-latest.deb && \
 		        rm -f version.txt ss-latest.deb && \
 			    . /etc/environment && \
-			        R -e "install.packages(c('shiny', 'rmarkdown'), repos='$MRAN')" && \
+			        R -e "install.packages(c('shiny', 'rmarkdown'), repos='https://mran.microsoft.com/')" && \
 				    cp -R /usr/local/lib/R/site-library/shiny/examples/* /srv/shiny-server/
 
-RUN R -e "install.packages(c('devtools', 'plotly', 'DT', 'broom', 'dplyr', 'tidyr', 'BH'), repos='$MRAN')" && \
+RUN R -e "install.packages(c('devtools', 'plotly', 'DT', 'broom', 'dplyr', 'tidyr', 'BH'), repos='https://mran.microsoft.com/')" && \
 	R -e "devtools::install_github('hadley/ggplot2')" && \
 	R -e "devtools::install_github('rstudio/shinydashboard')" && \
 	R -e "devtools::install_github('dloewenstein/ewavesPDFshiny')"
