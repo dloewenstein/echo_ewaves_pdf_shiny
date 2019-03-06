@@ -17,11 +17,11 @@ RUN R -e "install.packages(c('devtools', 'plotly', 'DT', 'broom', 'dplyr', 'tidy
     R -e "devtools::install_github('hadley/ggplot2')" && \
     R -e "devtools::install_github('rstudio/shinydashboard')"
 
-Run R -e "devtools::install_github('dloewenstein/ewavesPDFshiny')" #redo1
+Run R -e "devtools::install_github('dloewenstein/ewavesPDFshiny')"
 
 ADD /inst/shinyApp /srv/shiny-server/
 
 # Port to expose
-EXPOSE 3838
+EXPOSE 3839
 
 RUN ["chmod", "+x", "/usr/bin/shiny-server.sh"]
