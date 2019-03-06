@@ -15,8 +15,9 @@ RUN apt-get update && apt-get install -y \
 
 RUN R -e "install.packages(c('devtools', 'plotly', 'DT', 'broom', 'dplyr', 'tidyr', 'shiny', 'rmarkdown'), repos='https://cloud.r-project.org/')" && \
     R -e "devtools::install_github('hadley/ggplot2')" && \
-    R -e "devtools::install_github('rstudio/shinydashboard')" && \
-    R -e "devtools::install_github('dloewenstein/ewavesPDFshiny')"
+    R -e "devtools::install_github('rstudio/shinydashboard')"
+
+Run R -e "devtools::install_github('dloewenstein/ewavesPDFshiny')" #redo
 
 ADD /inst/shinyApp /srv/shiny-server/
 
