@@ -12,5 +12,5 @@ else
     exec shiny-server 2>&1 &
 
     # push the "real" application logs to stdout with xtail
-    exec xtail /var/log/shiny-server/
+    exec xtail /var/log/shiny-server/shiny-server.log 2>&1
 fi
