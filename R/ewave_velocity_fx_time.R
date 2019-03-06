@@ -25,9 +25,17 @@ ewave_velocity_fx_time <- function(.t, C, K, x0){
     }
 }
 
-ewave_velocity_fx_time_vectorized <- Vectorize(ewave_velocity_fx_time, ".t")
-
+#' Vectorized over time: Velocity of motion as function of time for E-waves
+#'
+#' @inheritParams ewave_velocity_fx_time
+#'
+#' @return
+#' @export
+#'
+#' @examples
 ewave_velocity_fx_time_data <- function(C, K, x0){
+    ewave_velocity_fx_time_vectorized <- Vectorize(ewave_velocity_fx_time, ".t")
+
     values <- data.frame(
         curve_fit(
             ewave_velocity_fx_time_vectorized(.t=x, C=C, K=K, x0=x0),
