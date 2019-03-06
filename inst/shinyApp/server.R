@@ -1,8 +1,12 @@
 library(shiny)
+library(shinydashboard)
 library(dplyr)
 library(ggplot2)
 library(plotly)
 library(purrr)
+library(ewavesPDFshiny)
+library(DT)
+library(tidyr)
 
 shiny_server <- function(input, output, session) {
 
@@ -277,7 +281,7 @@ shiny_server <- function(input, output, session) {
             formatRound(col_names[c("Epeak", "filling_energy", "R2", "adj_R2")], digits=2)
     })
 
-    output$scatterplot <- renderPlotly({
+    output$scatterplot <- plotly::renderPlotly({
         p_scatterplot <- ggplot(dataview_values$data, aes(x=peak_resistive_force,
                                                           y=peak_driving_force)) +
             geom_point() +
@@ -290,7 +294,7 @@ shiny_server <- function(input, output, session) {
         ggplotly(p_scatterplot)
     })
 
-    output$velocityplot <- renderPlotly({
+    output$velocityplot <- plotly::renderPlotly({
         if(!nrow(dataview_values$data)){
             example_data <- ewave_velocity_fx_time_data(41.58, 384.36, -0.1586)
             p_velocityplot <- ggplot(example_data, aes(x=x, y=y)) +

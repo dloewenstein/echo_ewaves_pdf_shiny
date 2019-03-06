@@ -1,5 +1,12 @@
 library(shiny)
 library(shinydashboard)
+library(dplyr)
+library(ggplot2)
+library(plotly)
+library(purrr)
+library(ewavesPDFshiny)
+library(DT)
+library(tidyr)
 
 shiny_ui <- dashboardPage(
     skin = "blue",
