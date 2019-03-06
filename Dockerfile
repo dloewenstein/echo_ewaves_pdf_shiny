@@ -17,7 +17,7 @@ RUN R -e "install.packages(c('devtools', 'plotly', 'DT', 'broom', 'dplyr', 'tidy
     R -e "devtools::install_github('hadley/ggplot2')" && \
     R -e "devtools::install_github('rstudio/shinydashboard')"
 
-Run R -e "devtools::install_github('dloewenstein/ewavesPDFshiny')" #redo
+Run R -e "devtools::install_github('dloewenstein/ewavesPDFshiny')" #redo1
 
 ADD /inst/shinyApp /srv/shiny-server/
 
