@@ -72,14 +72,24 @@ shiny_server <- function(input, output, session) {
         req(input$dt_input)
         req(input$epeak_input)
 
+        # time = delta(velocity)/acceleration
+        # AT units cm/s2 Epeak units cm/s * 1000 to get milliseconds
+        input_AT <- (input$at_input/input$epeak_input)*1000 
+        # DT units cm/s2 Epeak units cm/s * 1000 to get milliseconds
+        input_DT <- input$dt_input/input$epeak_input
+        # Epeak units cm/s * 100 to get m/s
+        input_Epeak <- (input$epeak_input)*100
+
+
+
         ## Generate PDF variables -------------------------------------------------
 
-        if ((input$at_input > 500) ||
-            (input$at_input < 10) ||
-            (input$dt_input > 500) ||
-            (input$dt_input < 10) ||
-            (input$epeak_input > 5) ||
-            (input$epeak_input < 0.1)) {
+        if ((input_AT > 500) ||
+            (input_AT < 10) ||
+            (input_DT > 500) ||
+            (input_DT < 10) ||
+            (input_Epeak > 5) ||
+            (input_Epeak < 0.1)) {
 
             .text <- "Error: Assigned inputs give unphysiological results"
             message_values$text <- .text
@@ -89,10 +99,7 @@ shiny_server <- function(input, output, session) {
 
             message_values$text <- .startup_message
             # get the input variables
-            input_AT <- input$at_input
-            input_DT <- input$dt_input
-            input_Epeak <- input$epeak_input
-
+            
             initial_pdf_parameters <- generate_c_k_x0(AT = input_AT,
                                                       DT = input_DT,
                                                       Epeak = input_Epeak)
