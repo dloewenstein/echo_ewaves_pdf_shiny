@@ -77,8 +77,8 @@ shiny_server <- function(input, output, session) {
         input_AT <- (input$at_input/input$epeak_input)*1000 
         # DT units cm/s2 Epeak units cm/s * 1000 to get milliseconds
         input_DT <- input$dt_input/input$epeak_input
-        # Epeak units cm/s * 100 to get m/s
-        input_Epeak <- (input$epeak_input)*100
+        # Epeak units cm/s / 100 to get m/s
+        input_Epeak <- (input$epeak_input)/100
 
 
 
