@@ -28,6 +28,7 @@ RUN R -e "install.packages(c('devtools', 'plotly', 'DT', 'broom', 'dplyr', 'tidy
 	R -e "devtools::install_github('dloewenstein/ewavesPDFshiny')"
 
 COPY /inst/shinyApp /srv/shiny-server/
+RUN chmod -R 755 /srv/shiny-server
 COPY /inst/shinyApp/shiny-server.sh /usr/bin/shiny-server.sh
 COPY /inst/shinyApp/shiny-server.conf /etc/shiny-server/shiny-server.conf
 
