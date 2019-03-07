@@ -10,9 +10,9 @@ library(tidyr)
 
 shiny_ui <- dashboardPage(
     skin = "blue",
-    title = "Echo E-waves (dev)",
+    title = "EchoEwaves(dev)",
     sidebar = dashboardSidebar(disable = TRUE),
-    header = dashboardHeader(title = "Echo E-Waves parameterized diastolic filling method"),
+    header = dashboardHeader(title = "Echo E-Waves (dev)"),
     body = dashboardBody(
         tags$head(
             tags$link(rel = "icon", type = "image/x-icon", href = readLines("bookmark_icon.txt")),
@@ -56,21 +56,21 @@ shiny_ui <- dashboardPage(
                     cellWidths = c(50, 50, 80, 300),
                     numericInput(
                         inputId = "at_input",
-                        label   = "AT [ms]",
+                        label   = "AT [cm/s^s]",
                         value   = NA,
                         min     = 10,
                         width   = '100'
                     ),
                     numericInput(
                         inputId = "dt_input",
-                        label   = "DT [ms]",
+                        label   = "DT [cm/s^2]",
                         value   = NA,
                         min     = 10,
                         width   = '100'
                     ),
                     numericInput(
                         inputId = "epeak_input",
-                        label   = "Epeak [m/s]",
+                        label   = "Epeak [cm/s]",
                         value   = NA,
                         min     = 0.1,
                         width   = '100'
