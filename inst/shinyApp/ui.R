@@ -53,7 +53,7 @@ shiny_ui <- dashboardPage(
                 status = "primary",
                 solidHeader = TRUE,
                 splitLayout(
-                    cellWidths = c(50, 50, 80, 300),
+                    cellWidths = c(80, 80, 80, 300),
                     numericInput(
                         inputId = "at_input",
                         label   = "AT [cm/s^s]",
