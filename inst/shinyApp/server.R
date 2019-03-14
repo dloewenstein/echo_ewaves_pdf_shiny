@@ -11,7 +11,9 @@ library(tidyr)
 shiny_server <- function(input, output, session) {
 
     dataview_dataframe <- tibble(
+        AS = numeric(0),
         AT = numeric(0),
+        DS = numeric(0),
         DT = numeric(0),
         Epeak = numeric(0),
         K = numeric(0),
@@ -32,7 +34,9 @@ shiny_server <- function(input, output, session) {
     )
 
     col_names <- c(
+        "AS"="E\nAcceleration\n[cm/s2]",
         "AT"="E\nAcceleration\nTime\n[ms]",
+        "DS"="E\nDecceleration\n[cm/s2]",
         "DT"="E\nDecceleration\nTime\n[ms]",
         "Epeak"="E\nVmax\n[m/s]",
         "K"="Stiffness\n(k)\n[g/s2]",
@@ -132,7 +136,9 @@ shiny_server <- function(input, output, session) {
 
                 ## Prepare data for presentation -------------------------------------------
                 pdf_data <- tibble(
+                    AS = input$at_input,
                     AT = input_AT,
+                    DS = input$dt_input,
                     DT = input_DT,
                     Epeak = input_Epeak,
                     K = initial_pdf_parameters$K,
@@ -254,7 +260,9 @@ shiny_server <- function(input, output, session) {
         DT::datatable(rbind(data.frame(dataview_values$data %>% select(-velocity_curve)),
                             summary_values$data),
                       colnames=c(
+                          "E\nAcceleration\n[cm/s2]"="AS",
                           "E\nAcceleration\nTime\n[ms]"="AT",
+                          "E\nDecceleration\n[cm/s2]"="DS",
                           "E\nDecceleration\nTime\n[ms]"="DT",
                           "E\nVmax\n[m/s]"="Epeak",
                           "Stiffness\n(k)\n[g/s2]"="K",
@@ -280,7 +288,7 @@ shiny_server <- function(input, output, session) {
                       autoHideNavigation = TRUE,
                       class = "compact"
         ) %>%
-            formatRound(col_names[c("AT", "DT", "K", "Tau", "damping_index")], digits=0) %>%
+            formatRound(col_names[c("AS", "AT", "DS", "DT", "K", "Tau", "damping_index")], digits=0) %>%
             formatPercentage(col_names["KFEI"], digits=1) %>%
             formatRound(col_names[c("C", "x0", "VTI", "peak_driving_force",
                                     "peak_resistive_force", "M", "B")],

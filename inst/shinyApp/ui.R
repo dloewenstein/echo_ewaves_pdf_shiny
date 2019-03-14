@@ -56,14 +56,14 @@ shiny_ui <- dashboardPage(
                     cellWidths = c(80, 80, 80, 300),
                     numericInput(
                         inputId = "at_input",
-                        label   = "AT [cm/s2]",
+                        label   = "AS [cm/s2]",
                         value   = NA,
                         min     = 10,
                         width   = '100'
                     ),
                     numericInput(
                         inputId = "dt_input",
-                        label   = "DT [cm/s2]",
+                        label   = "DS [cm/s2]",
                         value   = NA,
                         min     = 10,
                         width   = '100'
