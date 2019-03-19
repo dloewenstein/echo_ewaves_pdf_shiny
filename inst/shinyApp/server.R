@@ -54,7 +54,7 @@ shiny_server <- function(input, output, session) {
 
     dataview_values <- reactiveValues(data = dataview_dataframe)
     summary_values <- reactiveValues(data = dataview_dataframe %>% select(-velocity_curve))
-    .startup_message <- "Everything is correct"
+    .startup_message <- ""
     message_values <- reactiveValues(text = .startup_message)
     # Main functions -----------------------------------------------------------
 
@@ -81,7 +81,7 @@ shiny_server <- function(input, output, session) {
             (input$epeak_input > 5) ||
             (input$epeak_input < 0.1)) {
 
-            .text <- "Error: Assigned inputs give unphysiological results"
+            .text <- "Error: Unphysiological results"
             message_values$text <- .text
             session$sendCustomMessage(type = "refocus", message = list(NULL))
 
@@ -106,7 +106,7 @@ shiny_server <- function(input, output, session) {
             ## Perform checks ---------------------------------------------------------
             # check for unphysiological results
             if (initial_pdf_parameters$C < 0) {
-                .text <- "Error: Assigned inputs give unphysiological results"
+                .text <- "Error: Unphysiological results"
                 message_values$text <- .text
                 session$sendCustomMessage(type = "refocus", message = list(NULL))
             } else {
