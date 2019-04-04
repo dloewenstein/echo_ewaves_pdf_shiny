@@ -49,7 +49,7 @@ shiny_ui <- dashboardPage(
                         }
                         ")),
         fluidRow(
-            box(width  = 8,
+            box(width  = 9,
                 title  = "Results",
                 status = "primary",
                 solidHeader = TRUE,
