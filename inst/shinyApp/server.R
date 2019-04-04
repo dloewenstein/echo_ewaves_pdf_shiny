@@ -264,7 +264,7 @@ shiny_server <- function(input, output, session) {
                           "B" = "B",
                           "R\U00B2" = "R2",
                           "adj R\U00B2" = "adj_R2"),
-                      extensions = c('Buttons', 'Responsive'),
+                      extensions = c('Buttons'),
                       options = list(
                           dom = 'Brtip',
                           buttons = c('copy', 'csv', 'excel'),
