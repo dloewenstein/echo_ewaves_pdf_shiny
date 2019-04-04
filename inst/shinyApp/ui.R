@@ -31,7 +31,8 @@ shiny_ui <- dashboardPage(
         tags$script(
             'Shiny.addCustomMessageHandler("refocus",
             function(NULL) {
-            document.getElementById("at_input").select().focus();
+            document.getElementById("at_input").select();
+            document.getElementById("at_input").focus();
             });'
         ),
         tags$style(HTML("
