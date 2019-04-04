@@ -46,15 +46,18 @@ convert_to_time <- function(delta_velocity, acceleration) {
     )
 }
 
-convert_to_acceleration <- function(delta_velocity, acceleration) {
+convert_to_acceleration <- function(delta_velocity, time) {
 
     stopifnot(is.numeric(delta_velocity))
-    stopifnot(is.numeric(acceleration))
+    stopifnot(is.numeric(time))
+
+    # Need seconds
+    time <- time/1000
 
     # acceleration = delta(velocity)/time * 100 to get cm/s2
 
     result_as_acceleration <- (
-        #TODO
-        (delta_velocity )
+        (delta_velocity / time )
+        * 100
     )
 }

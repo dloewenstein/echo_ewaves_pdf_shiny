@@ -254,9 +254,9 @@ shiny_server <- function(input, output, session) {
         ## Prepare data for presentation -------------------------------------------
         pdf_data <-
             tibble(
-                AS = input$at_input,
+                AS = convert_to_acceleration(input_Epeak, input_AT),
                 AT = input_AT,
-                DS = input$dt_input,
+                DS = convert_to_acceleration(input_Epeak, input_DT),
                 DT = input_DT,
                 Epeak = input_Epeak,
                 K = initial_pdf_parameters$K,
