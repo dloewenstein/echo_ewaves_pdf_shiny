@@ -1,8 +1,5 @@
 FROM rocker/shiny
 
-# Add custom nginx template
-ADD /nginx.conf.sigil /app
-
 RUN apt-get update && apt-get install -y \
 	    sudo \
 	        gdebi-core \
@@ -23,6 +20,9 @@ RUN R -e "install.packages(c('devtools', 'shiny', 'plotly', 'DT', 'broom', 'dply
 COPY /inst/shinyApp /srv/shiny-server/
 COPY /inst/shinyApp/shiny-server.sh /usr/bin/shiny-server.sh
 COPY /inst/shinyApp/shiny-server.conf /etc/shiny-server/shiny-server.conf
+
+# Add custom nginx template
+ADD nginx.conf.sigil /app/nginx.conf.sigil
 
 # Port to expose
 EXPOSE 3839
