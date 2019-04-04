@@ -14,13 +14,13 @@ RUN apt-get update && apt-get install -y \
 
 RUN R -e "install.packages(c('devtools', 'shiny', 'plotly', 'DT', 'broom', 'dplyr', 'tidyr', 'BH'), repos='https://mran.microsoft.com/')" && \
 	R -e "devtools::install_github('hadley/ggplot2')" && \
-	R -e "devtools::install_github('rstudio/shinydashboard')" && \
-	R -e "devtools::install_github('dloewenstein/ewavesPDFshiny')"
+	R -e "devtools::install_github('rstudio/shinydashboard')"
 
 COPY /inst/shinyApp /srv/shiny-server/
 COPY /inst/shinyApp/shiny-server.sh /usr/bin/shiny-server.sh
 COPY /inst/shinyApp/shiny-server.conf /etc/shiny-server/shiny-server.conf
 
+RUN R -e "devtools::install_github('dloewenstein/ewavesPDFshiny')"
 # Add custom nginx template
 ADD nginx.conf.sigil /app/nginx.conf.sigil
 
