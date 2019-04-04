@@ -1,5 +1,8 @@
 FROM rocker/shiny
 
+# Add custom nginx template
+ADD /nginx.conf.sigil /app
+
 RUN apt-get update && apt-get install -y \
 	    sudo \
 	        gdebi-core \
