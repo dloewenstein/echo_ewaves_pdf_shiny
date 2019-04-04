@@ -23,6 +23,9 @@ COPY /inst/shinyApp /srv/shiny-server/
 COPY /inst/shinyApp/shiny-server.sh /usr/bin/shiny-server.sh
 COPY /inst/shinyApp/shiny-server.conf /etc/shiny-server/shiny-server.conf
 
+# Add custom nginx template
+ADD nginx.conf.sigil /app/nginx.conf.sigil
+
 # Port to expose
 EXPOSE 3838
 
