@@ -78,7 +78,9 @@ shiny_ui <- dashboardPage(
                     ),
                     textOutput("messages")
                 ),
-                DT::dataTableOutput("dataview"),
+                div(style = 'overflow-x: auto', # Auto adds scrollbar for table
+                DT::dataTableOutput("dataview")
+                ),
                 actionButton(
                     inputId = "delete",
                     label = "Delete selected",
