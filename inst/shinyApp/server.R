@@ -10,6 +10,82 @@ library(tidyr)
 
 shiny_server <- function(input, output, session) {
 
+    # Customize inputcontrols dependent on selection -----------------------
+
+
+    create_input_label <- function(prefix, ending, units) {
+        label <-
+            sprintf(
+                "%s%s [%s]",
+                prefix,ending,
+                units
+            )
+    }
+
+    # Render controls
+    output$input_controls <- renderUI({
+
+
+        label_input_units <-
+            ifelse(input$input_units == "m", "m", "cm")
+
+        # Create labels dependent on input type and units
+        # Must be acc if not velocity
+        if (input$input_type == "duration") {
+            label_input_type <- list(ending = "T", unit = "ms")
+        } else {
+            label_input_type <-
+                list(ending = "S",
+                     unit = paste0(label_input_units,"/s2")
+                )
+        }
+
+
+
+
+        splitLayout(
+            cellWidths = c(80, 80, 80, 300),
+            numericInput(
+                inputId = "at_input",
+                label   =
+                    create_input_label(
+                        "A",label_input_type$ending,
+                        label_input_type$unit
+                    ),
+                value   = NA,
+                min     = 10,
+                width   = '100'
+            ),
+            numericInput(
+                inputId = "dt_input",
+                label   =
+                    create_input_label(
+                        "D",label_input_type$ending,
+                        label_input_type$unit
+                    ),
+                value   = NA,
+                min     = 10,
+                width   = '100'
+            ),
+            numericInput(
+                inputId = "epeak_input",
+                label   =
+                    create_input_label(
+                        "Epeak","",
+                        paste0(label_input_units, "/s")
+                    ),
+                value   = NA,
+                min     = 0.1,
+                width   = '100'
+            ),
+            textOutput("messages")
+        )
+    })
+
+    # End inputcontrol logic
+
+    # Initial dataviews -------------------------------------------------
+
     dataview_dataframe <- tibble(
         AS = numeric(0),
         AT = numeric(0),
@@ -54,12 +130,15 @@ shiny_server <- function(input, output, session) {
         "R2" = "R\U00B2",
         "adj_R2" = "adj R\U00B2"
     )
+
     # Setup reactive components -------------------------------------------------
 
     dataview_values <- reactiveValues(data = dataview_dataframe)
     summary_values <- reactiveValues(data = dataview_dataframe %>% select(-velocity_curve))
     .startup_message <- "Everything is correct"
+    .error_message   <- "Error: Assigned inputs give unphysiological results"
     message_values <- reactiveValues(text = .startup_message)
+
     # Main functions -----------------------------------------------------------
 
     observeEvent(input$enter, {
@@ -71,137 +150,173 @@ shiny_server <- function(input, output, session) {
         } else {
             return()
         }
+
         # require entries in AT, DT, Epeak
         req(input$at_input)
         req(input$dt_input)
         req(input$epeak_input)
 
-        # time = delta(velocity)/acceleration
-        # AT units cm/s2 Epeak units cm/s * 1000 to get milliseconds
-        input_AT <- (input$epeak_input/input$at_input)*1000 
-        # DT units cm/s2 Epeak units cm/s * 1000 to get milliseconds
-        input_DT <- (input$epeak_input/input$dt_input)*1000
-        # Epeak units cm/s / 100 to get m/s
-        input_Epeak <- (input$epeak_input)/100
+        input_AT    <- input$at_input
+        input_DT    <- input$dt_input
+        input_Epeak <- input$epeak_input
 
+        # Input type and unit logic
+        in_cm_logical <- input$input_units == "cm"
+        entering_acceleration <- input$input_type == "acceleration"
 
+        # Want Epeak in m/s
+        input_Epeak <-
+            convert_to_meter(input_Epeak, in_cm_logical)
+
+        # If AT | DT in duration(ms), don't alter
+
+        if (entering_acceleration) {
+            # Want m/s2
+            input_AT <- convert_to_meter(input_AT, in_cm_logical)
+            input_DT <- convert_to_meter(input_DT, in_cm_logical)
+
+            # Want in ms
+            input_AT <- convert_to_time(input_Epeak, input_AT)
+            input_DT <- convert_to_time(input_Epeak, input_DT)
+        }
+
+        # Verfiy valid input data -------------------------------
+
+        AT_not_ok    <- check_duration(input_AT)
+        DT_not_ok    <- check_duration(input_DT)
+        Epeak_not_ok <- check_velocity(input_Epeak)
+
+        valid_input <- TRUE
+
+        if (AT_not_ok || DT_not_ok || Epeak_not_ok) {
+
+            message_values$text <- .error_message
+            session$sendCustomMessage(type = "refocus", message = list(NULL))
+
+            valid_input <- FALSE
+
+        }
+
+        # Halt here if not valid results
+        req(valid_input)
+        message_values$text <- .startup_message
 
         ## Generate PDF variables -------------------------------------------------
 
-        if ((input_AT > 500) ||
-            (input_AT < 10) ||
-            (input_DT > 500) ||
-            (input_DT < 10) ||
-            (input_Epeak > 5) ||
-            (input_Epeak < 0.1)) {
+        initial_pdf_parameters <-
+            generate_c_k_x0(
+                AT = input_AT,
+                DT = input_DT,
+                Epeak = input_Epeak
+            )
 
-            .text <- "Error: Assigned inputs give unphysiological results"
-            message_values$text <- .text
+        secondary_pdf_parameters <-
+            generate_pdf_parameters(
+                C     = initial_pdf_parameters$C,
+                K     = initial_pdf_parameters$K,
+                x0    = initial_pdf_parameters$x0,
+                AT    = input_AT,
+                DT    = input_DT,
+                Epeak = input_Epeak
+            )
+
+        ## Perform checks ---------------------------------------------------------
+        # check for unphysiological results
+
+        valid_viscoelasticity <- TRUE
+
+        if (initial_pdf_parameters$C < 0) {
+            message_values$text <- .error_message
             session$sendCustomMessage(type = "refocus", message = list(NULL))
 
-        } else {
-
-            message_values$text <- .startup_message
-            # get the input variables
-            
-            initial_pdf_parameters <- generate_c_k_x0(AT = input_AT,
-                                                      DT = input_DT,
-                                                      Epeak = input_Epeak)
-
-            secondary_pdf_parameters <- generate_pdf_parameters(C     = initial_pdf_parameters$C,
-                                                                K     = initial_pdf_parameters$K,
-                                                                x0    = initial_pdf_parameters$x0,
-                                                                AT    = input_AT,
-                                                                DT    = input_DT,
-                                                                Epeak = input_Epeak)
-            ## Perform checks ---------------------------------------------------------
-            # check for unphysiological results
-            if (initial_pdf_parameters$C < 0) {
-                .text <- "Error: Assigned inputs give unphysiological results"
-                message_values$text <- .text
-                session$sendCustomMessage(type = "refocus", message = list(NULL))
-            } else {
-                message_values$text <- .startup_message
-
-
-                ## Data for plots ---------------------------------------------------------
-                curve_parameters <- list(K = initial_pdf_parameters$K,
-                                         C = initial_pdf_parameters$C,
-                                         x0 = initial_pdf_parameters$x0)
-                # generate data for each curve from parameters
-                velocity_curve <- purrr::pmap(
-                    curve_parameters,
-                    ewave_velocity_fx_time_data
-                )
-
-                ## Prepare data for presentation -------------------------------------------
-                pdf_data <- tibble(
-                    AS = input$at_input,
-                    AT = input_AT,
-                    DS = input$dt_input,
-                    DT = input_DT,
-                    Epeak = input_Epeak,
-                    K = initial_pdf_parameters$K,
-                    C = initial_pdf_parameters$C,
-                    x0 = abs(initial_pdf_parameters$x0) * 100,             #  Convert from meter to cm, present as absolut value
-                    Tau = (secondary_pdf_parameters$Tau) * 1000,            #  Convert from seconds to milliseconds
-                    KFEI = secondary_pdf_parameters$KFEI,
-                    VTI = secondary_pdf_parameters$VTI * 100,               # Convert from meter to cm
-                    peak_driving_force = abs(secondary_pdf_parameters$peak_driving_force), #  Present as absolute value
-                    peak_resistive_force = secondary_pdf_parameters$peak_resistive_force,
-                    damping_index = secondary_pdf_parameters$damping_index,
-                    filling_energy = secondary_pdf_parameters$filling_energy,
-                    M = NA,
-                    B = NA,
-                    R2 = NA,
-                    adj_R2 = NA,
-                    velocity_curve = velocity_curve
-                )
-
-                # Combine previous and newly added data
-                dataview_values$data <- rbind(dataview_values$data, pdf_data)
-
-                lm_fit <- lm(peak_driving_force ~ peak_resistive_force,
-                             data = dataview_values$data)
-
-                lm_data <- data.frame(
-                    # Intercept
-                    M = coef(lm_fit)[1],
-                    # beta
-                    B = coef(lm_fit)[2],
-                    R2 = summary(lm_fit)$r.squared,
-                    adj_R2 = summary(lm_fit)$adj.r.squared
-                )
-
-                mean_values  <- dataview_values$data %>%
-                    select(-velocity_curve) %>%
-                    summarize_all(mean)
-
-                sd_values    <- dataview_values$data %>%
-                    select(-velocity_curve) %>%
-                    summarize_all(sd)
-
-                mean_values$M <- coef(lm_fit)[1] # Intercept
-                mean_values$B <- coef(lm_fit)[2] # Beta
-                mean_values$R2 <- summary(lm_fit)$r.squared
-                mean_values$adj_R2 <- summary(lm_fit)$adj.r.squared
-
-                summary_values$data <- rbind(mean_values, sd_values)
-                row.names(summary_values$data) <- c("mean", "sd")
-
-
-                ## Return focus to first input --------------------------------------------
-                session$sendCustomMessage(type ="refocus",message = list(NULL))
-
-                updateNumericInput(session, "at_input", value = NA)
-                updateNumericInput(session, "dt_input", value = NA)
-                updateNumericInput(session, "epeak_input", value = NA)
-            }
+            valid_viscoelasticity <- FALSE
         }
 
-    }
-    )
+        req(valid_viscoelasticity)
+        message_values$text <- .startup_message
 
+
+        ## Data for plots ---------------------------------------------------------
+        curve_parameters <-
+            list(
+                K = initial_pdf_parameters$K,
+                C = initial_pdf_parameters$C,
+                x0 = initial_pdf_parameters$x0
+            )
+
+        # generate data for each curve from parameters
+        velocity_curve <-
+            purrr::pmap(
+                curve_parameters,
+                ewave_velocity_fx_time_data
+            )
+
+        ## Prepare data for presentation -------------------------------------------
+        pdf_data <-
+            tibble(
+                AS = input$at_input,
+                AT = input_AT,
+                DS = input$dt_input,
+                DT = input_DT,
+                Epeak = input_Epeak,
+                K = initial_pdf_parameters$K,
+                C = initial_pdf_parameters$C,
+                x0 = abs(initial_pdf_parameters$x0) * 100,             #  Convert from meter to cm, present as absolut value
+                Tau = (secondary_pdf_parameters$Tau) * 1000,            #  Convert from seconds to milliseconds
+                KFEI = secondary_pdf_parameters$KFEI,
+                VTI = secondary_pdf_parameters$VTI * 100,               # Convert from meter to cm
+                peak_driving_force = abs(secondary_pdf_parameters$peak_driving_force), #  Present as absolute value
+                peak_resistive_force = secondary_pdf_parameters$peak_resistive_force,
+                damping_index = secondary_pdf_parameters$damping_index,
+                filling_energy = secondary_pdf_parameters$filling_energy,
+                M = NA,
+                B = NA,
+                R2 = NA,
+                adj_R2 = NA,
+                velocity_curve = velocity_curve
+            )
+
+        # Combine previous and newly added data
+        dataview_values$data <- rbind(dataview_values$data, pdf_data)
+
+        lm_fit <- lm(peak_driving_force ~ peak_resistive_force,
+                     data = dataview_values$data)
+
+        lm_data <- data.frame(
+            # Intercept
+            M = coef(lm_fit)[1],
+            # beta
+            B = coef(lm_fit)[2],
+            R2 = summary(lm_fit)$r.squared,
+            adj_R2 = summary(lm_fit)$adj.r.squared
+        )
+
+        mean_values  <- dataview_values$data %>%
+            select(-velocity_curve) %>%
+            summarize_all(mean)
+
+        sd_values    <- dataview_values$data %>%
+            select(-velocity_curve) %>%
+            summarize_all(sd)
+
+        mean_values$M <- coef(lm_fit)[1] # Intercept
+        mean_values$B <- coef(lm_fit)[2] # Beta
+        mean_values$R2 <- summary(lm_fit)$r.squared
+        mean_values$adj_R2 <- summary(lm_fit)$adj.r.squared
+
+        summary_values$data <- rbind(mean_values, sd_values)
+        row.names(summary_values$data) <- c("mean", "sd")
+
+
+        ## Return focus to first input --------------------------------------------
+        session$sendCustomMessage(type ="refocus",message = list(NULL))
+
+        updateNumericInput(session, "at_input", value = NA)
+        updateNumericInput(session, "dt_input", value = NA)
+        updateNumericInput(session, "epeak_input", value = NA)
+
+        }
+    )
     # On delete function ----------------------------------------------------------
 
     observeEvent(input$delete, {

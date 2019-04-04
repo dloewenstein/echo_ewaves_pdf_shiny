@@ -53,30 +53,17 @@ shiny_ui <- dashboardPage(
                 title  = "Results",
                 status = "primary",
                 solidHeader = TRUE,
+                uiOutput("input_controls"),
                 splitLayout(
-                    cellWidths = c(80, 80, 80, 300),
-                    numericInput(
-                        inputId = "at_input",
-                        label   = "AS [cm/s2]",
-                        value   = NA,
-                        min     = 10,
-                        width   = '100'
-                    ),
-                    numericInput(
-                        inputId = "dt_input",
-                        label   = "DS [cm/s2]",
-                        value   = NA,
-                        min     = 10,
-                        width   = '100'
-                    ),
-                    numericInput(
-                        inputId = "epeak_input",
-                        label   = "Epeak [cm/s]",
-                        value   = NA,
-                        min     = 0.1,
-                        width   = '100'
-                    ),
-                    textOutput("messages")
+                    cellWidths = c(120, 120),
+                    radioButtons("input_type", "Input",
+                                 choices = c(Duration = "duration",
+                                             Acceleration = "acceleration"),
+                                 selected = "duration"),
+                    radioButtons("input_units", "Units",
+                                 choices = c(m = "m",
+                                             cm =  "cm"),
+                                 selected = "m")
                 ),
                 div(style = 'overflow-x: auto', # Auto adds scrollbar for table
                 DT::dataTableOutput("dataview")
