@@ -2,8 +2,12 @@
 {{ $port_map_list := $port_map | split ":" }}
 {{ $scheme := index $port_map_list 0 }}
 {{ $listen_port := index $port_map_list 1 }}
-
 {{ $upstream_port := index $port_map_list 2 }}
+{{ range $listeners := $.DOKKU_APP_LISTENERS | split " " }}
+{{ $listener_list := $listeners | split ":" }}
+{{ $listener_ip := index $listener_list 0 }}
+
+
 server {
   listen      [::]:80;
   listen      80;
