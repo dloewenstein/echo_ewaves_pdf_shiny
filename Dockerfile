@@ -11,7 +11,7 @@ RUN apt-get update && apt-get install -y \
 				    libssl-dev \
 				    libgit2-dev \
 				        wget \
-                        xlcip
+                        xclip
 
 RUN R -e "install.packages(c('devtools', 'shiny', 'plotly', 'DT', 'broom', 'dplyr', 'tidyr', 'BH', 'rclipboard'), repos='https://mran.microsoft.com/')" && \
 	R -e "devtools::install_github('hadley/ggplot2')" && \
