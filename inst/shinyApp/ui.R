@@ -14,6 +14,7 @@ shiny_ui <- dashboardPage(
     sidebar = dashboardSidebar(disable = TRUE),
     header = dashboardHeader(title = "Echo E-Waves (dev)"),
     body = dashboardBody(
+        rclipboardSetup(),
         tags$head(
             tags$link(rel = "icon", type = "image/x-icon", href = readLines("bookmark_icon.txt")),
             includeScript(system.file("java", "googleanalytics.js", package = "ewavesPDFshiny"))
@@ -56,14 +57,24 @@ shiny_ui <- dashboardPage(
                 uiOutput("input_controls"),
                 splitLayout(
                     cellWidths = c(120, 120),
-                    radioButtons("input_type", "Input",
+                    radioButtons("input_type", "Input:",
                                  choices = c(Duration = "duration",
                                              Acceleration = "acceleration"),
                                  selected = "duration"),
-                    radioButtons("input_units", "Units",
+                    radioButtons("input_units", "Units:",
                                  choices = c(m = "m",
                                              cm =  "cm"),
                                  selected = "m")
+                ),
+                splitLayout(
+                    cellWidths = c(80, 80, 220),
+                    uiOutput("clip"),
+                    downloadButton("download","CSV"),
+                radioButtons("export_selection", NULL,
+                             choices = c(All = "all",
+                                         Summary = "summary",
+                                         Selection = "selection"),
+                             inline = TRUE)
                 ),
                 div(style = 'overflow-x: auto', # Auto adds scrollbar for table
                 DT::dataTableOutput("dataview")
@@ -72,6 +83,11 @@ shiny_ui <- dashboardPage(
                     inputId = "delete",
                     label = "Delete selected",
                     icon = icon("trash")
+                ),
+                actionButton(
+                    inputId = "clear",
+                    label = "Clear",
+                    icon = icon("reset")
                 )
             )
         ),

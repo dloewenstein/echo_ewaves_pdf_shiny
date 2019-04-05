@@ -7,9 +7,9 @@ library(purrr)
 library(ewavesPDFshiny)
 library(DT)
 library(tidyr)
+library(rclipboard)
 
 shiny_server <- function(input, output, session) {
-
     # Customize inputcontrols dependent on selection -----------------------
 
 
@@ -78,7 +78,7 @@ shiny_server <- function(input, output, session) {
                 min     = 0.1,
                 width   = '100'
             ),
-            textOutput("messages")
+            htmlOutput("messages")
         )
     })
 
@@ -87,56 +87,71 @@ shiny_server <- function(input, output, session) {
     # Initial dataviews -------------------------------------------------
 
     dataview_dataframe <- tibble(
-        AS = numeric(0),
-        AT = numeric(0),
-        DS = numeric(0),
-        DT = numeric(0),
-        Epeak = numeric(0),
-        K = numeric(0),
-        C = numeric(0),
-        x0 = numeric(0),
-        Tau = numeric(0),
-        KFEI = numeric(0),
-        VTI = numeric(0),
-        peak_driving_force = numeric(0),
+        AS                   = numeric(0),
+        AT                   = numeric(0),
+        DS                   = numeric(0),
+        DT                   = numeric(0),
+        Epeak                = numeric(0),
+        K                    = numeric(0),
+        C                    = numeric(0),
+        x0                   = numeric(0),
+        Tau                  = numeric(0),
+        KFEI                 = numeric(0),
+        VTI                  = numeric(0),
+        peak_driving_force   = numeric(0),
         peak_resistive_force = numeric(0),
-        damping_index = numeric(0),
-        filling_energy = numeric(0),
-        M = numeric(0),
-        B = numeric(0),
-        R2 = numeric(0),
-        adj_R2 = numeric(0),
-        velocity_curve = vector("list", 0)
+        damping_index        = numeric(0),
+        filling_energy       = numeric(0),
+        M                    = numeric(0),
+        B                    = numeric(0),
+        R2                   = numeric(0),
+        adj_R2               = numeric(0),
+        velocity_curve       = vector("list", 0)
     )
 
     col_names <- c(
-        "AS"="E\nAcceleration\n[cm/s2]",
-        "AT"="E\nAcceleration\nTime\n[ms]",
-        "DS"="E\nDecceleration\n[cm/s2]",
-        "DT"="E\nDecceleration\nTime\n[ms]",
-        "Epeak"="E\nVmax\n[m/s]",
-        "K"="Stiffness\n(k)\n[g/s2]",
-        "C"="Viscoelasticity\n(c)\n[g/s]",
-        "x0"="Load\n(x0)\n[cm]",
-        "Tau"="Tau\n[ms]",
-        "KFEI"="KFEI\n[%]",
-        "VTI"="VTI\n[cm]",
-        "peak_driving_force"="Peak\nDriving\nForce\n[mN]",
-        "peak_resistive_force"="Peak\nResistive\nForce\n[mN]",
-        "damping_index"="Damping\nIndex\n[g2/s2]",
-        "filling_energy"="Filling\nEnergy\n[mJ]",
-        "M" = "M [mN]",
-        "B" = "B",
-        "R2" = "R\U00B2",
-        "adj_R2" = "adj R\U00B2"
+        "AS"                   = "E\nAcceleration\n[cm/s2]",
+        "AT"                   = "E\nAcceleration\nTime\n[ms]",
+        "DS"                   = "E\nDecceleration\n[cm/s2]",
+        "DT"                   = "E\nDecceleration\nTime\n[ms]",
+        "Epeak"                = "E\nVmax\n[m/s]",
+        "K"                    = "Stiffness\n(k)\n[g/s2]",
+        "C"                    = "Viscoelasticity\n(c)\n[g/s]",
+        "x0"                   = "Load\n(x0)\n[cm]",
+        "Tau"                  = "Tau\n[ms]",
+        "KFEI"                 = "KFEI\n[%]",
+        "VTI"                  = "VTI\n[cm]",
+        "peak_driving_force"   = "Peak\nDriving\nForce\n[mN]",
+        "peak_resistive_force" = "Peak\nResistive\nForce\n[mN]",
+        "damping_index"        = "Damping\nIndex\n[g2/s2]",
+        "filling_energy"       = "Filling\nEnergy\n[mJ]",
+        "M"                    = "M [mN]",
+        "B"                    = "B",
+        "R2"                   = "R\U00B2",
+        "adj_R2"               = "adj R\U00B2"
     )
 
     # Setup reactive components -------------------------------------------------
 
     dataview_values <- reactiveValues(data = dataview_dataframe)
-    summary_values <- reactiveValues(data = dataview_dataframe %>% select(-velocity_curve))
-    .startup_message <- "Everything is correct"
-    .error_message   <- "Error: Assigned inputs give unphysiological results"
+
+    summary_values <-
+        reactiveValues(
+        data = dataview_dataframe %>%
+            select(-velocity_curve)
+        )
+
+    .startup_message <-
+        HTML(
+            paste(
+                icon("check-circle"),
+                "Everything is correct")
+            )
+    .error_message  <- HTML(
+        paste(
+            icon("alert", lib = "glyphicon"),
+            "Assigned inputs give unphysiological results")
+        )
     message_values <- reactiveValues(text = .startup_message)
 
     # Main functions -----------------------------------------------------------
@@ -161,19 +176,19 @@ shiny_server <- function(input, output, session) {
         input_Epeak <- input$epeak_input
 
         # Input type and unit logic
-        in_cm_logical <- input$input_units == "cm"
-        entering_acceleration <- input$input_type == "acceleration"
+        needs_conversion_from_cm <- input$input_units == "cm"
+        input_as_acceleration <- input$input_type == "acceleration"
 
         # Want Epeak in m/s
         input_Epeak <-
-            convert_to_meter(input_Epeak, in_cm_logical)
+            convert_to_meter(input_Epeak, needs_conversion_from_cm)
 
         # If AT | DT in duration(ms), don't alter
 
-        if (entering_acceleration) {
+        if (input_as_acceleration) {
             # Want m/s2
-            input_AT <- convert_to_meter(input_AT, in_cm_logical)
-            input_DT <- convert_to_meter(input_DT, in_cm_logical)
+            input_AT <- convert_to_meter(input_AT, needs_conversion_from_cm)
+            input_DT <- convert_to_meter(input_DT, needs_conversion_from_cm)
 
             # Want in ms
             input_AT <- convert_to_time(input_Epeak, input_AT)
@@ -368,6 +383,45 @@ shiny_server <- function(input, output, session) {
         }
     })
 
+
+
+    output$clip <- renderUI({
+            data_for_export <-
+        write.table(
+            export_data(
+                data          = dataview_values$data,
+                summary       = summary_values$data,
+                selected_rows = input$dataview_rows_selected,
+                choice        = input$export_selection,
+                excl_col      = "velocity_curve"),
+            sep = "\\t"
+        )
+
+        rclipButton(
+            "clipbtn",
+            "Copy",
+            data_for_export,
+            icon = icon("clipboard")
+        )
+    })
+
+    output$download <- downloadHandler(
+        filename = function(choice = input$export_selection) {
+            paste("ewavespdf-", choice, "-", Sys.Date(), ".csv", sep = "")
+        },
+        content = function(file) {
+            write.csv(
+                export_data(
+                    data          = dataview_values$data,
+                    summary       = summary_values$data,
+                    selected_rows = input$dataview_rows_selected,
+                    choice        = input$export_selection,
+                    excl_col      = "velocity_curve"),
+                file
+            )
+        }
+    )
+
     # Rendering ------------------------------------------------------------------
     output$messages <- renderText({message_values$text})
 
@@ -394,10 +448,10 @@ shiny_server <- function(input, output, session) {
                           "B" = "B",
                           "R\U00B2" = "R2",
                           "adj R\U00B2" = "adj_R2"),
-                      extensions = c('Buttons'),
+                      #extensions = c('Buttons'),
                       options = list(
                           dom = 'Brtip',
-                          buttons = c('copy', 'csv', 'excel'),
+                         #buttons = c('copy', 'csv', 'excel'),
                           ordering = FALSE
                       ),
                       autoHideNavigation = TRUE,

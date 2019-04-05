@@ -107,3 +107,44 @@ convert_to_acceleration <- function(delta_velocity, time) {
         * 100
     )
 }
+
+#' Export data helper
+#'
+#' @param data \code{data.frame} of raw data
+#' @param summary \code{data.frame} of summary data
+#' @param selected_rows \code{vector}
+#' @param choice \code{character} What to export c("selection", "all", "summary")
+#' @param excl_col charcter \code{vector} of columns to exclude from export
+#'
+#' @return \code{data.frame}
+#' @export
+#'
+export_data <- function(data, summary, selected_rows, choice, excl_col) {
+    stopifnot(choice %in% c("selection", "all", "summary"))
+    stopifnot(all(excl_col %in% names(data)))
+
+    if (choice == "selection") {
+        data_for_export <-
+            data[selected_rows, ] %>%
+            select(-excl_col)
+    }
+
+    if (choice == "all") {
+        data_for_export <-
+            data %>%
+            select(-excl_col) %>%
+            data.frame(., stringsAsFactors = FALSE) %>%
+            rbind(summary)
+    }
+
+    if (choice == "summary") {
+        if (excl_col %in% names(summary)) {
+        data_for_export <- summary %>%
+                select(-excl_col)
+        } else {
+            data_for_export <- summary
+        }
+    }
+
+    return(data_for_export)
+}
