@@ -10,15 +10,12 @@ RUN apt-get update && apt-get install -y \
 				    libxt-dev \
 				    libssl-dev \
 				    libgit2-dev \
-				        wget
+				        wget \
+                        xlcip
 
-RUN R -e "install.packages(c('devtools', 'shiny', 'plotly', 'DT', 'broom', 'dplyr', 'tidyr', 'BH'), repos='https://mran.microsoft.com/')" && \
+RUN R -e "install.packages(c('devtools', 'shiny', 'plotly', 'DT', 'broom', 'dplyr', 'tidyr', 'BH', 'rclipboard'), repos='https://mran.microsoft.com/')" && \
 	R -e "devtools::install_github('hadley/ggplot2')" && \
 	R -e "devtools::install_github('rstudio/shinydashboard')"
-
-RUN apt-get install -y xclip
-
-RUN R -e "install.packages('rclipboard')" 
 
 COPY /inst/shinyApp /srv/shiny-server/
 COPY /inst/shinyApp/shiny-server.sh /usr/bin/shiny-server.sh
