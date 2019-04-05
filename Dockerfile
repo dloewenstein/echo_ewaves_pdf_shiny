@@ -16,9 +16,9 @@ RUN R -e "install.packages(c('devtools', 'shiny', 'plotly', 'DT', 'broom', 'dply
 	R -e "devtools::install_github('hadley/ggplot2')" && \
 	R -e "devtools::install_github('rstudio/shinydashboard')"
 
-RUN apt install -y xclip
+RUN apt-get install -y xclip
 
-RUN R -e "install.packages('rclipboard')"
+RUN R -e "install.packages('rclipboard')" 
 
 COPY /inst/shinyApp /srv/shiny-server/
 COPY /inst/shinyApp/shiny-server.sh /usr/bin/shiny-server.sh
