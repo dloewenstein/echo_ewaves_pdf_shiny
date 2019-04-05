@@ -383,6 +383,15 @@ shiny_server <- function(input, output, session) {
         }
     })
 
+    observeEvent(input$clear, {
+
+        dataview_values$data <- dataview_dataframe
+
+        summary_values$data  <-
+            dataview_dataframe %>%
+            select(-velocity_curve)
+    })
+
 
     output$download <- downloadHandler(
         filename = function(choice = input$export_selection) {

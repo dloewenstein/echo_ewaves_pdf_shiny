@@ -86,7 +86,7 @@ shiny_ui <- dashboardPage(
                 actionButton(
                     inputId = "clear",
                     label = "Clear",
-                    icon = icon("reset")
+                    icon = icon("trash")
                 )
             )
         ),
