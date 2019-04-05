@@ -14,7 +14,6 @@ shiny_ui <- dashboardPage(
     sidebar = dashboardSidebar(disable = TRUE),
     header = dashboardHeader(title = "Echo E-Waves (dev)"),
     body = dashboardBody(
-        rclipboardSetup(),
         tags$head(
             tags$link(rel = "icon", type = "image/x-icon", href = readLines("bookmark_icon.txt")),
             includeScript(system.file("java", "googleanalytics.js", package = "ewavesPDFshiny"))
