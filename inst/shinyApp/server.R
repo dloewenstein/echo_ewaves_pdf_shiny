@@ -7,6 +7,7 @@ library(purrr)
 library(ewavesPDFshiny)
 library(DT)
 library(tidyr)
+library(rclipboard)
 
 shiny_server <- function(input, output, session) {
     # Customize inputcontrols dependent on selection -----------------------
@@ -408,6 +409,25 @@ shiny_server <- function(input, output, session) {
             )
         }
     )
+
+    output$clip <- renderUI({
+        data_for_export <-
+            export_data(
+                data          = dataview_values$data,
+                summary       = summary_values$data,
+                selected_rows = input$dataview_rows_selected,
+                choice        = input$export_selection,
+                excl_col      = "velocity_curve")
+
+        txtout <- textConnection("clipboard_data", open = "w")
+        write.table(data_for_export, txtout, sep = "\t",
+                    row.names = TRUE, col.names = NA) #Fix for adding blankcolumn name for rownames
+        close(txtout)
+
+        rclipButton("clipbtn", "Copy",
+                    paste(clipboard_data, collapse = "\n"),
+                    icon = icon("clipboard"))
+    })
 
     # Rendering ------------------------------------------------------------------
     output$messages <- renderText({message_values$text})

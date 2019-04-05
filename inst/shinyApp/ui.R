@@ -7,6 +7,7 @@ library(purrr)
 library(ewavesPDFshiny)
 library(DT)
 library(tidyr)
+library(rclipboard)
 
 shiny_ui <- dashboardPage(
     skin = "blue",
@@ -14,6 +15,7 @@ shiny_ui <- dashboardPage(
     sidebar = dashboardSidebar(disable = TRUE),
     header = dashboardHeader(title = "Echo E-Waves (dev)"),
     body = dashboardBody(
+        rclipboardSetup(),
         tags$head(
             tags$link(rel = "icon", type = "image/x-icon", href = readLines("bookmark_icon.txt")),
             includeScript(system.file("java", "googleanalytics.js", package = "ewavesPDFshiny"))
@@ -66,7 +68,8 @@ shiny_ui <- dashboardPage(
                                  selected = "m")
                 ),
                 splitLayout(
-                    cellWidths = c(80, 220),
+                    cellWidths = c(80, 80, 220),
+                    uiOutput("clip"),
                     downloadButton("download","CSV"),
                 radioButtons("export_selection", NULL,
                              choices = c(All = "all",
