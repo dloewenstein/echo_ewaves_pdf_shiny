@@ -12,7 +12,7 @@ RUN apt-get update && apt-get install -y \
 				    libgit2-dev \
 				        wget
 
-RUN R -e "install.packages(c('devtools', 'shiny', 'plotly', 'DT', 'broom', 'dplyr', 'tidyr'), repos='https://mran.microsoft.com/')" && \
+RUN R -e "install.packages(c('devtools', 'shiny', 'plotly', 'DT', 'broom', 'dplyr', 'tidyr'), repos='https://mran.microsoft.com/'))" && \
 	R -e "devtools::install_github('hadley/ggplot2')" && \
 	R -e "devtools::install_github('rstudio/shinydashboard')"
 
