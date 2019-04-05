@@ -2,7 +2,7 @@ Package: ewavesPDFshiny
 Title: Shiny App For Analysis Of Diastolic Function Using The Parameterized Diastolic Filling (PDF) Method
 Version: 0.1
 Authors@R: person("Daniel", "Loewenstein", email = "loewenstein.daniel@gmail.com",
-                  role = c("aut", "cre"))
+                  role = c("aut", "cre"), comment = c(ORCID = "0000-0003-2118-3056"))
 Description: Deploy shiny app for PDF methods.
 Depends: R (>= 3.1.0)
 License: MIT + file LICENSE
@@ -17,5 +17,7 @@ Imports: dplyr,
     plotly,
     ggplot2,
     DT,
-    rmarkdown
+    rmarkdown,
+    purrr,
+    rclipboard
 RoxygenNote: 6.1.0
