@@ -13,6 +13,9 @@ generate_c_k_x0(AT, DT, Epeak)
 
 \item{Epeak}{E peak velocity (meter/second)}
 }
+\value{
+Stiffness, viscoelsticity, Load
+}
 \description{
 Generate viscoelastic energyloss, stiffness, and load
 }

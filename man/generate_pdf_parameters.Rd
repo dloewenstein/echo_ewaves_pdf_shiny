@@ -19,6 +19,9 @@ generate_pdf_parameters(C, K, x0, Epeak, AT, DT)
 
 \item{DT}{E decelleration time (milliseconds)}
 }
+\value{
+Numerics
+}
 \description{
 Generate Parameterized Diastolic Filling parameters
 }

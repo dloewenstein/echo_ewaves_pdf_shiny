@@ -4,7 +4,7 @@
 #' @param DT E decelleration time (milliseconds)
 #' @param Epeak E peak velocity (meter/second)
 #'
-#' @return
+#' @return Stiffness, viscoelsticity, Load
 #' @export
 #'
 #' @examples

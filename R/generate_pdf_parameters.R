@@ -5,7 +5,7 @@
 #' @param x0 Load (cm)
 #' @inheritParams generate_c_k_x0
 #'
-#' @return
+#' @return Numerics
 #' @export
 #'
 #' @examples
