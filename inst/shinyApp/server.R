@@ -7,7 +7,6 @@ library(purrr)
 library(ewavesPDFshiny)
 library(DT)
 library(tidyr)
-library(rclipboard)
 
 shiny_server <- function(input, output, session) {
     # Customize inputcontrols dependent on selection -----------------------
