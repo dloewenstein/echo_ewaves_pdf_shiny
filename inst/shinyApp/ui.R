@@ -67,8 +67,7 @@ shiny_ui <- dashboardPage(
                                  selected = "m")
                 ),
                 splitLayout(
-                    cellWidths = c(80, 80, 220),
-                    uiOutput("clip"),
+                    cellWidths = c(80, 220),
                     downloadButton("download","CSV"),
                 radioButtons("export_selection", NULL,
                              choices = c(All = "all",

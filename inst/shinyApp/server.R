@@ -384,27 +384,6 @@ shiny_server <- function(input, output, session) {
     })
 
 
-
-    output$clip <- renderUI({
-            data_for_export <-
-        write.table(
-            export_data(
-                data          = dataview_values$data,
-                summary       = summary_values$data,
-                selected_rows = input$dataview_rows_selected,
-                choice        = input$export_selection,
-                excl_col      = "velocity_curve"),
-            sep = "\\t"
-        )
-
-        rclipButton(
-            "clipbtn",
-            "Copy",
-            data_for_export,
-            icon = icon("clipboard")
-        )
-    })
-
     output$download <- downloadHandler(
         filename = function(choice = input$export_selection) {
             paste("ewavespdf-", choice, "-", Sys.Date(), ".csv", sep = "")

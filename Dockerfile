@@ -1,4 +1,4 @@
-FROM rocker/shiny
+FROM rocker/shiny:latest
 
 RUN apt-get update && apt-get install -y \
 	    sudo \
@@ -10,10 +10,9 @@ RUN apt-get update && apt-get install -y \
 				    libxt-dev \
 				    libssl-dev \
 				    libgit2-dev \
-				        wget \
-                        xclip
+				        wget
 
-RUN R -e "install.packages(c('devtools', 'shiny', 'plotly', 'DT', 'broom', 'dplyr', 'tidyr', 'BH', 'rclipboard'), repos='https://mran.microsoft.com/')" && \
+RUN R -e "install.packages(c('devtools', 'shiny', 'plotly', 'DT', 'broom', 'dplyr', 'tidyr'), repos='https://mran.microsoft.com/')" && \
 	R -e "devtools::install_github('hadley/ggplot2')" && \
 	R -e "devtools::install_github('rstudio/shinydashboard')"
 
@@ -26,6 +25,6 @@ RUN R -e "devtools::install_github('dloewenstein/ewavesPDFshiny', ref = 'develop
 ADD nginx.conf.sigil /app/nginx.conf.sigil
 
 # Port to expose
-EXPOSE 3840
+EXPOSE 3839
 
 RUN ["chmod", "+x", "/usr/bin/shiny-server.sh"]
