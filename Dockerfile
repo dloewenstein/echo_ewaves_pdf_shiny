@@ -18,7 +18,7 @@ RUN R -e "install.packages(c('devtools', 'shiny', 'plotly', 'DT', 'broom', 'dply
 
 RUN apt install -y xclip
 
-RUN R -e "install.packages('rclipBoard')"
+RUN R -e "install.packages('rclipboard')"
 
 COPY /inst/shinyApp /srv/shiny-server/
 COPY /inst/shinyApp/shiny-server.sh /usr/bin/shiny-server.sh
