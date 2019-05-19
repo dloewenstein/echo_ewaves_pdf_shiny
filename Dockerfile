@@ -22,7 +22,7 @@ COPY /inst/shinyApp /srv/shiny-server/
 COPY /inst/shinyApp/shiny-server.sh /usr/bin/shiny-server.sh
 COPY /inst/shinyApp/shiny-server.conf /etc/shiny-server/shiny-server.conf
 
-RUN R -e "devtools::install_github('dloewenstein/ewavesPDFshiny', ref = 'development')" 
+RUN R -e "devtools::install_github('dloewenstein/ewavesPDFshiny', ref = 'development')" #redo
 # Add custom nginx template
 ADD nginx.conf.sigil /app/nginx.conf.sigil
 
