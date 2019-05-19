@@ -24,6 +24,7 @@ COPY /inst/shinyApp/shiny-server.conf /etc/shiny-server/shiny-server.conf
 
 RUN R -e "devtools::install_github('dloewenstein/ewavesPDFshiny', ref = 'development')"
 # Add custom nginx template
+WORKDIR /app
 ADD nginx.conf.sigil /app/nginx.conf.sigil
 
 # Port to expose
