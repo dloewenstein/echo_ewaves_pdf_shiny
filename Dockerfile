@@ -10,6 +10,7 @@ RUN apt-get update && apt-get install -y \
 				    libxt-dev \
 				    libssl-dev \
 				    libgit2-dev \
+                    libxml2-dev \
 				        wget
 
 RUN R -e "install.packages(c('devtools', 'shiny', 'plotly', 'DT', 'broom', 'dplyr', 'tidyr'), repos='https://mran.microsoft.com/')" && \
