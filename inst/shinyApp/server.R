@@ -149,8 +149,10 @@ shiny_server <- function(input, output, session) {
             )
     .error_message  <- HTML(
         paste(
+            '<font color=\"#FF0000\"><b>',
             icon("alert", lib = "glyphicon"),
-            "Assigned inputs give unphysiological results")
+            "Assigned inputs give unphysiological results",
+            "</b></font>")
         )
     message_values <- reactiveValues(text = .startup_message)
 
