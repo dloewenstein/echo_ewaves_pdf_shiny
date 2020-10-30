@@ -11,9 +11,13 @@ library(rclipboard)
 
 shiny_ui <- dashboardPage(
     skin = "blue",
-    title = "EchoEwaves(dev)",
+    title = "EchoEwaves",
     sidebar = dashboardSidebar(disable = TRUE),
-    header = dashboardHeader(title = "Echo E-Waves (dev)"),
+    header = dashboardHeader(title = HTML(
+        paste0(
+            '<a href="http://echoewaves.org" style="color:#ffffff">',
+            "EchoEwaves.org",
+            "</a>"))),
     body = dashboardBody(
         rclipboardSetup(),
         tags$head(
