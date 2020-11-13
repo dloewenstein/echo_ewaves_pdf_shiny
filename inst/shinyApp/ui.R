@@ -14,16 +14,18 @@ shiny_ui <- dashboardPage(
     title = "EchoEwaves",
     sidebar = dashboardSidebar(disable = TRUE),
     header = dashboardHeader(title = HTML(
-        paste0(
-            '<a href="http://echoewaves.org" style="color:#ffffff">',
-            "EchoEwaves.org",
-            "</a>"))),
+					  paste0(
+						 '<a href="http://echoewaves.org" style="color:#ffffff">',
+						 "EchoEwaves.org",
+						 "</a>")
+					  )
+    ),
     body = dashboardBody(
-        rclipboardSetup(),
         tags$head(
-            tags$link(rel = "icon", type = "image/x-icon", href = readLines("bookmark_icon.txt")),
-            includeScript(system.file("java", "googleanalytics.js", package = "ewavesPDFshiny"))
+            includeHTML("google-analytics.html"),
+            tags$link(rel = "icon", type = "image/x-icon", href = readLines("bookmark_icon.txt"))
         ),
+        rclipboardSetup(),
         tags$script('
                     $(document).on("keydown", function (e) {
                     Shiny.setInputValue("enter", e.which);
